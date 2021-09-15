@@ -1,8 +1,10 @@
 package com.example.composelike
 
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.ViewModelProvider
 
 enum class TileType {
     WALL,
@@ -49,6 +51,15 @@ class SceneViewModel(
     var cameraCoordinates: Coordinates = Coordinates(0, 0),
     var cameraCoupled: Boolean = true,
 ) : ViewModel() {
+    private var _turnsPassed = MutableLiveData(0)
+    val turnsPassed: LiveData<Int> = _turnsPassed
+    fun incrementTurnsPassed() { _turnsPassed.value = _turnsPassed.value!! + 1 }
+
+    private var _dungeonLevel = MutableLiveData(1)
+    val dungeonlevel: LiveData<Int> = _dungeonLevel
+    fun incrementDungeonlevel() { _dungeonLevel.value = _dungeonLevel.value!! + 1 }
+    fun decrementDungeonlevel() { _dungeonLevel.value = _dungeonLevel.value!! - 1 }
+
     fun snapCameraToPlayer() { cameraCoordinates = getPlayer().coordinates }
 
     private var _tiles = MutableLiveData<List<List<Tile>>>(listOf())
@@ -89,7 +100,6 @@ class SceneViewModel(
         return actors.value!!.first { it.coordinates == coordinates }
     }
     fun getPlayer(): Actor {
-        // TODO: Tentative -- will need updating with a Player class.
         return _actors.value!!.first { it.actorFaction == ActorFaction.PLAYER }
     }
     fun tileIsOccupied(tile: Tile): Boolean {
@@ -108,24 +118,38 @@ class SceneViewModel(
         if (targetTile != null) {
             if (walkableTileType(targetTile) && !tileIsOccupied(targetTile)) {
                 var newActorsList = actors.value!!.minus(actor)
-                newActorsList = newActorsList.plus(
-                    Actor(
-                    coordinates = targetCoordinates,
-                    name = actor.name,
-                    actorFaction = actor.actorFaction
-                ))
+                actor.coordinates = targetCoordinates
+                newActorsList = newActorsList.plus(actor)
                 _actors.value = newActorsList
             }
         }
     }
     fun movePlayerAndProcessTurn(
-        // TODO: This one is tentative.
         movementDirection: MovementDirection
     ) {
-        val deltas = movementDeltas[movementDirection]!!
         moveActor(getPlayer(), movementDirection)
-        snapCameraToPlayer()
+        incrementTurnsPassed()
+        if (cameraCoupled) { snapCameraToPlayer() }
+        updateHudStrings()
         updateTilemapStrings()
+    }
+
+    private var _hudStrings = MutableLiveData<Map<String, String>>(mapOf())
+    var hudStrings: LiveData<Map<String, String>> = _hudStrings
+    fun updateHudStrings() {
+        val player = getPlayer()
+        _hudStrings.value = mapOf(
+            "hp" to "HP: " + player.health.toString() + "/" + player.maxHealth.toString(),
+            "mp" to "MP: " + player.mana.toString() + "/" + player.maxMana.toString(),
+            "bonusAttack" to "ATK: " + player.bonusAttack.toString(),
+            "bonusDefense" to "DEF: " + player.bonusDefense.toString(),
+            "gold" to "Gold: " + player.gold.toString(),
+            "playerLevel" to "PLVL: " + player.level.toString(),
+            // TODO: Perhaps an XP Bar!
+            "experienceToLevel" to "XP-TO-GO: " + player.experienceToLevel.toString(),
+            "dungeonLevel" to "DLVL: ${dungeonlevel.value!!}",
+            "turnsPassed" to "Turns: ${turnsPassed.value!!}",
+        )
     }
 
     private var _tilemapStrings = MutableLiveData<List<String>>(listOf())
@@ -158,19 +182,44 @@ class SceneViewModel(
         _tilemapStrings.value = newDisplayStrings
     }
 
+    private var _messageLog = MutableLiveData<List<String>>(listOf())
+    var messageLog = _messageLog
+    fun addLogMessage(msg: String) {
+        _messageLog.value = _messageLog.value!!.plus(msg)
+    }
+
     init {
         _tiles.value = when (tilemapType) {
             TilemapType.TESTING -> generateTestingMap()
         }
         _actors.value = _actors.value!!.plus(
-            Actor(
+            Actor (
                 // TODO: Something less arbitrary for the starting spot:
                 coordinates = Coordinates(2, 5),
                 name = "@player",
-                actorFaction = ActorFaction.PLAYER
+                actorFaction = ActorFaction.PLAYER,
+                inventory = listOf(
+                    // TODO: This list is a placeholder.
+                    Item("Healing Potion", ItemType.CONSUMABLE),
+                    Item("Healing Potion", ItemType.CONSUMABLE),
+                    Item("Healing Potion", ItemType.CONSUMABLE),
+                )
             )
         )
         snapCameraToPlayer()
         updateTilemapStrings()
+        updateHudStrings()
+        addLogMessage("Welcome to Composelike!")
+    }
+}
+
+class SceneViewModelFactory(
+    val tilemapCols: Int,
+    val tilemapRows: Int,
+    val tilemapType: TilemapType
+): ViewModelProvider.Factory {
+    override fun <T : ViewModel?> create(modelClass: Class<T>): T {
+        @Suppress("UNCHECKED CAST")
+        return SceneViewModel(tilemapCols, tilemapRows, tilemapType) as T
     }
 }
