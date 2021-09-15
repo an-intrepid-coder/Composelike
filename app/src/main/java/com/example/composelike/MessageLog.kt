@@ -6,14 +6,17 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
 fun MessageLog(
-    messageLog: List<String>
+    gameViewModel: GameViewModel
 ) {
+    val messageLog by gameViewModel.messageLog.observeAsState()
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -23,7 +26,7 @@ fun MessageLog(
             Text("-~-~-~-~-~-")
             Spacer(Modifier.height(8.dp))
         }
-        for (msg in messageLog.reversed()) {
+        for (msg in messageLog!!.reversed()) {
             item {
                 Text(msg)
                 Spacer(Modifier.height(8.dp))

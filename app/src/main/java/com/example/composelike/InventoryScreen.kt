@@ -7,6 +7,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -14,10 +16,10 @@ import androidx.navigation.NavController
 
 @Composable
 fun InventoryScreen(
-    sceneViewModel: SceneViewModel,
-    inventoryEntries: List<Item>,
+    gameViewModel: GameViewModel,
     navController: NavController,
 ) {
+    val inventoryEntries by gameViewModel.inventoryEntries.observeAsState()
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -27,10 +29,10 @@ fun InventoryScreen(
             Text("-~-~-~-~-")
             Spacer(Modifier.height(8.dp))
         }
-        for (entry in inventoryEntries) {
+        for (entry in inventoryEntries!!) {
             item {
                 Text(entry.displayedName, Modifier.clickable {
-                    entry.effect(sceneViewModel)
+                    entry.effect(gameViewModel)
                     navController.navigate("composelikeInterface")
                 })
                 Spacer(Modifier.height(8.dp))

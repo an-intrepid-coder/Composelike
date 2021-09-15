@@ -9,14 +9,16 @@ enum class ItemType {
 data class Item(
     // TODO: A more robust naming system that allows for item identification and unknowns.
     val displayedName: String,
+    val realName: String,
     val itemType: ItemType,
-    val effect: (SceneViewModel) -> Unit
+    val effect: (GameViewModel) -> Unit
 )
 
 fun healingPotion(): Item {
     val itemName = "Healing Potion"
     return Item(
         displayedName = itemName,
+        realName = itemName,
         itemType = ItemType.CONSUMABLE,
         effect = { sceneViewModel ->
             // TODO: Make a more generic itemEffect() function which factors some of this out.

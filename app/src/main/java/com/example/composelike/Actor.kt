@@ -7,6 +7,26 @@ enum class ActorFaction {
     // more to come
 }
 
+fun newPlayer(): Actor {
+    return Actor (
+        // TODO: Something less arbitrary for the starting spot:
+        coordinates = Coordinates(2, 5),
+        name = "@player",
+        actorFaction = ActorFaction.PLAYER,
+        inventory = listOf(
+            // TODO: This list is a placeholder.
+            healingPotion(),
+            healingPotion(),
+            healingPotion()
+        )
+    )
+}
+
+// TODO: Some factory functions for simple enemies.
+// TODO: Some simple behavior functions for enemy "AI". Enemy behavior will probably be
+//  implemented using higher-order functions.
+// TODO: Collision detection and combat between Actors.
+
 open class Actor(
     // TODO: A class and leveling system! Vaguely DnD-like, for now.
     var coordinates: Coordinates,

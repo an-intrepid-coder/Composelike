@@ -43,7 +43,7 @@ val movementDeltas = mapOf(
     MovementDirection.STATIONARY to MovementDeltas(0, 0)
 )
 
-class SceneViewModel(
+class GameViewModel(
     val tilemapCols: Int,
     val tilemapRows: Int,
     val tilemapType: TilemapType,
@@ -121,6 +121,7 @@ class SceneViewModel(
         actor: Actor,
         movementDirection: MovementDirection
     ) {
+        // TODO: Collision detection!
         val deltas = movementDeltas[movementDirection]!!
         val targetCoordinates = Coordinates(
             actor.coordinates.x + deltas.dx,
@@ -144,6 +145,10 @@ class SceneViewModel(
         if (cameraCoupled) { snapCameraToPlayer() }
         updateHudStrings()
         updateTilemapStrings()
+        updateInventoryEntries()
+        // TODO: Although it would be a *slight* performance hit, updateMapScreenStrings()
+        //  may need to happen here too instead of only on navigation. It depends on testing
+        //  once gameplay is more advanced.
     }
 
     private var _hudStrings = MutableLiveData<Map<String, String>>(mapOf())
@@ -166,8 +171,6 @@ class SceneViewModel(
 
     private var _tilemapStrings = MutableLiveData<List<String>>(listOf())
     var tilemapStrings: LiveData<List<String>> = _tilemapStrings
-    // TODO: Update the following function or make some other improvement to allow for a
-    //  FULL-SCREEN pannable map display...? May be possible. I think it is!
     private fun displayStrings(
         origin: Coordinates,
         ends: Coordinates
@@ -230,25 +233,6 @@ class SceneViewModel(
         _inventoryEntries.value = newEntries
     }
 
-    private fun newPlayer(): Actor {
-        return Actor (
-            // TODO: Something less arbitrary for the starting spot:
-            coordinates = Coordinates(2, 5),
-            name = "@player",
-            actorFaction = ActorFaction.PLAYER,
-            inventory = listOf(
-                // TODO: This list is a placeholder.
-                healingPotion(),
-                healingPotion(),
-                healingPotion()
-            )
-        )
-    }
-
-    // TODO: Some factory functions for simple enemies.
-    // TODO: Some simple behavior functions for enemy "AI".
-    // TODO: Collision detection between Actors, and combat.
-
     init {
         _tiles.value = when (tilemapType) {
             TilemapType.TESTING -> generateTestingMap()
@@ -268,6 +252,6 @@ class SceneViewModelFactory(
 ): ViewModelProvider.Factory {
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED CAST")
-        return SceneViewModel(tilemapCols, tilemapRows, tilemapType) as T
+        return GameViewModel(tilemapCols, tilemapRows, tilemapType) as T
     }
 }

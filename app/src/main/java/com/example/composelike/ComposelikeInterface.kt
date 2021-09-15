@@ -5,6 +5,8 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -53,12 +55,12 @@ fun ComposelikeTilemap(
 
 @Composable
 fun ComposelikeTouchControls(
-    sceneViewModel: SceneViewModel,
+    gameViewModel: GameViewModel,
     navController: NavController
 ) {
     Row {
         Text("[MAP]", Modifier.clickable {
-            sceneViewModel.updateMapScreenStrings()
+            gameViewModel.updateMapScreenStrings()
             navController.navigate("mapScreen")
         })
         Spacer(Modifier.width(8.dp))
@@ -67,19 +69,19 @@ fun ComposelikeTouchControls(
         })
         Spacer(Modifier.width(8.dp))
         Text("[Y]", Modifier.clickable {
-            sceneViewModel.movePlayerAndProcessTurn(MovementDirection.UPLEFT)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.UPLEFT)
         })
         Spacer(Modifier.width(8.dp))
         Text("[K]", Modifier.clickable {
-            sceneViewModel.movePlayerAndProcessTurn(MovementDirection.UP)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.UP)
         })
         Spacer(Modifier.width(8.dp))
         Text("[U]", Modifier.clickable {
-            sceneViewModel.movePlayerAndProcessTurn(MovementDirection.UPRIGHT)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.UPRIGHT)
         })
         Spacer(Modifier.width(8.dp))
         Text("[INV]", Modifier.clickable {
-            sceneViewModel.updateInventoryEntries()
+            gameViewModel.updateInventoryEntries()
             navController.navigate("inventoryScreen")
         })
         Spacer(Modifier.width(8.dp))
@@ -94,15 +96,15 @@ fun ComposelikeTouchControls(
         })
         Spacer(Modifier.width(8.dp))
         Text("[H]", Modifier.clickable {
-            sceneViewModel.movePlayerAndProcessTurn(MovementDirection.LEFT)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.LEFT)
         })
         Spacer(Modifier.width(8.dp))
         Text("[.]", Modifier.clickable {
-            sceneViewModel.movePlayerAndProcessTurn(MovementDirection.STATIONARY)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.STATIONARY)
         })
         Spacer(Modifier.width(8.dp))
         Text("[L]", Modifier.clickable {
-            sceneViewModel.movePlayerAndProcessTurn(MovementDirection.RIGHT)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.RIGHT)
         })
         Spacer(Modifier.width(8.dp))
         Text("[>]", Modifier.clickable {
@@ -112,15 +114,15 @@ fun ComposelikeTouchControls(
     Spacer(Modifier.height(8.dp))
     Row {
         Text("[B]", Modifier.clickable {
-            sceneViewModel.movePlayerAndProcessTurn(MovementDirection.DOWNLEFT)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.DOWNLEFT)
         })
         Spacer(Modifier.width(8.dp))
         Text("[J]", Modifier.clickable {
-            sceneViewModel.movePlayerAndProcessTurn(MovementDirection.DOWN)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.DOWN)
         })
         Spacer(Modifier.width(8.dp))
         Text("[N]", Modifier.clickable {
-            sceneViewModel.movePlayerAndProcessTurn(MovementDirection.DOWNRIGHT)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.DOWNRIGHT)
         })
     }
     Spacer(Modifier.height(8.dp))
@@ -140,25 +142,33 @@ fun ComposelikeMessageLog(
     }
 }
 
+/*
+    TODO: DEV NOTE: Currently, although the game survives most configuration changes, it does not
+    survive the hard reset prompted by hitting the back button on an empty backStack. In the long-
+    term this will be solved by serializing the GameViewModel and saving it when the program
+    closes or is otherwise destroyed. It can be saved in persistent app storage, and custom
+    backButton behavior can be implemented to force this when needed.
+ */
+
 @Composable
 fun ComposelikeInterface(
-    sceneViewModel: SceneViewModel,
-    hudStrings: Map<String, String>,
-    tilemapStrings: List<String>,
-    messageLog: List<String>,
+    gameViewModel: GameViewModel,
     navController: NavController
 ) {
+    val hudStrings by gameViewModel.hudStrings.observeAsState()
+    val tilemapStrings by gameViewModel.tilemapStrings.observeAsState()
+    val messageLog by gameViewModel.messageLog.observeAsState()
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Some HUD information:
-        ComposelikeHud(hudStrings = hudStrings)
+        ComposelikeHud(hudStrings = hudStrings!!)
         // The Tilemap display:
-        ComposelikeTilemap(tilemapStrings = tilemapStrings)
+        ComposelikeTilemap(tilemapStrings = tilemapStrings!!)
         // Touch Controls:
-        ComposelikeTouchControls(sceneViewModel = sceneViewModel, navController = navController)
+        ComposelikeTouchControls(gameViewModel = gameViewModel, navController = navController)
         // A LazyColumn of the entire Message Log, starting with the tail end.
-        ComposelikeMessageLog(messageLog = messageLog)
+        ComposelikeMessageLog(messageLog = messageLog!!)
     }
 }
