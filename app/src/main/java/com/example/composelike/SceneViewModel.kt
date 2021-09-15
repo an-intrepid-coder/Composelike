@@ -1,6 +1,5 @@
 package com.example.composelike
 
-import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -51,6 +50,9 @@ class SceneViewModel(
     var cameraCoordinates: Coordinates = Coordinates(0, 0),
     var cameraCoupled: Boolean = true,
 ) : ViewModel() {
+    private var _tilemapDisplayCols = 36
+    private var _tilemapDisplayRows = 12
+
     private var _turnsPassed = MutableLiveData(0)
     val turnsPassed: LiveData<Int> = _turnsPassed
     fun incrementTurnsPassed() { _turnsPassed.value = _turnsPassed.value!! + 1 }
@@ -74,13 +76,17 @@ class SceneViewModel(
         }
         // This will grow down the road.
     }
-
+    fun isEdgeCoordinate(coordinates: Coordinates): Boolean {
+        val col = coordinates.x
+        val row = coordinates.y
+        return (row == 0 || col == 0 || row == tilemapRows - 1 || col == tilemapCols - 1)
+    }
     private fun generateTestingMap(): List<List<Tile>> {
         var newTilemap: List<List<Tile>> = listOf()
         repeat (tilemapRows) { row ->
             var newRow: List<Tile> = listOf()
             repeat (tilemapCols) { col ->
-                newRow = if (row == 0 || col == 0 || row == tilemapRows - 1 || col == tilemapCols - 1) {
+                newRow = if (isEdgeCoordinate(Coordinates(col, row))) {
                     newRow.plus(Tile(Coordinates(col, row), TileType.WALL))
                 } else {
                     newRow.plus(Tile(Coordinates(col, row), TileType.FLOOR))
@@ -93,6 +99,12 @@ class SceneViewModel(
 
     private var _actors = MutableLiveData<List<Actor>>(listOf())
     var actors: LiveData<List<Actor>> = _actors
+    fun addActor(actor: Actor) {
+        _actors.value = _actors.value!!.plus(actor)
+    }
+    fun removeActor(actor: Actor) {
+        _actors.value = _actors.value!!.minus(actor)
+    }
     fun actorCoordinates(): List<Coordinates> {
         return actors.value!!.map { it.coordinates }
     }
@@ -145,7 +157,7 @@ class SceneViewModel(
             "bonusDefense" to "DEF: " + player.bonusDefense.toString(),
             "gold" to "Gold: " + player.gold.toString(),
             "playerLevel" to "PLVL: " + player.level.toString(),
-            // TODO: Perhaps an XP Bar!
+            // TODO: XP Bar!
             "experienceToLevel" to "XP-TO-GO: " + player.experienceToLevel.toString(),
             "dungeonLevel" to "DLVL: ${dungeonlevel.value!!}",
             "turnsPassed" to "Turns: ${turnsPassed.value!!}",
@@ -154,15 +166,16 @@ class SceneViewModel(
 
     private var _tilemapStrings = MutableLiveData<List<String>>(listOf())
     var tilemapStrings: LiveData<List<String>> = _tilemapStrings
-    fun updateTilemapStrings() {
-        val origin = Coordinates(
-            cameraCoordinates.x - tilemapCols / 2,
-            cameraCoordinates.y - tilemapRows / 2
-        )
+    // TODO: Update the following function or make some other improvement to allow for a
+    //  FULL-SCREEN pannable map display...? May be possible. I think it is!
+    private fun displayStrings(
+        origin: Coordinates,
+        ends: Coordinates
+    ): List<String> {
         var newDisplayStrings = listOf<String>()
-        for (row in origin.y until origin.y + tilemapRows) {
+        for (row in origin.y until ends.y) {
             var rowString = ""
-            for (col in origin.x until origin.x + tilemapCols) {
+            for (col in origin.x until ends.x) {
                 val tile = getTileOrNull(Coordinates(col, row))
                 rowString += if (tile != null) {
                     if (Coordinates(col, row) in actorCoordinates()) {
@@ -179,7 +192,25 @@ class SceneViewModel(
             }
             newDisplayStrings = newDisplayStrings.plus(rowString)
         }
-        _tilemapStrings.value = newDisplayStrings
+        return newDisplayStrings
+    }
+    fun updateTilemapStrings() {
+        val origin = Coordinates(
+            cameraCoordinates.x - _tilemapDisplayCols / 2,
+            cameraCoordinates.y - _tilemapDisplayRows / 2
+        )
+        val ends = Coordinates(
+            origin.x + _tilemapDisplayCols,
+            origin.y + _tilemapDisplayRows
+        )
+        _tilemapStrings.value = displayStrings(origin, ends)
+    }
+    private var _mapScreenStrings = MutableLiveData<List<String>>(listOf())
+    var mapScreenStrings: LiveData<List<String>> = _mapScreenStrings
+    fun updateMapScreenStrings() {
+        val origin = Coordinates(0, 0)
+        val ends = Coordinates(tilemapCols, tilemapRows)
+        _mapScreenStrings.value = displayStrings(origin, ends)
     }
 
     private var _messageLog = MutableLiveData<List<String>>(listOf())
@@ -188,24 +219,41 @@ class SceneViewModel(
         _messageLog.value = _messageLog.value!!.plus(msg)
     }
 
+    private var _inventoryEntries = MutableLiveData<List<Item>>(listOf())
+    var inventoryEntries: LiveData<List<Item>> = _inventoryEntries
+    fun updateInventoryEntries() {
+        var newEntries = listOf<Item>()
+        val playerInventory = getPlayer().inventory
+        for (item in playerInventory) {
+            newEntries = newEntries.plus(item)
+        }
+        _inventoryEntries.value = newEntries
+    }
+
+    private fun newPlayer(): Actor {
+        return Actor (
+            // TODO: Something less arbitrary for the starting spot:
+            coordinates = Coordinates(2, 5),
+            name = "@player",
+            actorFaction = ActorFaction.PLAYER,
+            inventory = listOf(
+                // TODO: This list is a placeholder.
+                healingPotion(),
+                healingPotion(),
+                healingPotion()
+            )
+        )
+    }
+
+    // TODO: Some factory functions for simple enemies.
+    // TODO: Some simple behavior functions for enemy "AI".
+    // TODO: Collision detection between Actors, and combat.
+
     init {
         _tiles.value = when (tilemapType) {
             TilemapType.TESTING -> generateTestingMap()
         }
-        _actors.value = _actors.value!!.plus(
-            Actor (
-                // TODO: Something less arbitrary for the starting spot:
-                coordinates = Coordinates(2, 5),
-                name = "@player",
-                actorFaction = ActorFaction.PLAYER,
-                inventory = listOf(
-                    // TODO: This list is a placeholder.
-                    Item("Healing Potion", ItemType.CONSUMABLE),
-                    Item("Healing Potion", ItemType.CONSUMABLE),
-                    Item("Healing Potion", ItemType.CONSUMABLE),
-                )
-            )
-        )
+        _actors.value = _actors.value!!.plus(newPlayer())
         snapCameraToPlayer()
         updateTilemapStrings()
         updateHudStrings()

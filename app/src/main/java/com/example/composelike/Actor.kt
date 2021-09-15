@@ -8,10 +8,10 @@ enum class ActorFaction {
 }
 
 open class Actor(
+    // TODO: A class and leveling system! Vaguely DnD-like, for now.
     var coordinates: Coordinates,
     val name: String,
     val actorFaction: ActorFaction = ActorFaction.NEUTRAL,
-    // TODO: A class and leveling system! Vaguely DnD-like, for now.
     var maxHealth: Int = 8,
     var maxMana: Int = 3,
     var bonusAttack: Int = 0,

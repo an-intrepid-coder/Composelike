@@ -8,6 +8,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
 
 @Composable
 fun ComposelikeHud(
@@ -40,7 +41,10 @@ fun ComposelikeHud(
 fun ComposelikeTilemap(
     tilemapStrings: List<String>
 ) {
-    LazyColumn {
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         for (line in tilemapStrings) {
             item { Text(line) }
         }
@@ -49,11 +53,17 @@ fun ComposelikeTilemap(
 
 @Composable
 fun ComposelikeTouchControls(
-    sceneViewModel: SceneViewModel
+    sceneViewModel: SceneViewModel,
+    navController: NavController
 ) {
     Row {
+        Text("[MAP]", Modifier.clickable {
+            sceneViewModel.updateMapScreenStrings()
+            navController.navigate("mapScreen")
+        })
+        Spacer(Modifier.width(8.dp))
         Text("[LOG]", Modifier.clickable {
-            // TODO
+            navController.navigate("messageLog")
         })
         Spacer(Modifier.width(8.dp))
         Text("[Y]", Modifier.clickable {
@@ -69,11 +79,20 @@ fun ComposelikeTouchControls(
         })
         Spacer(Modifier.width(8.dp))
         Text("[INV]", Modifier.clickable {
-            // TODO
+            sceneViewModel.updateInventoryEntries()
+            navController.navigate("inventoryScreen")
+        })
+        Spacer(Modifier.width(8.dp))
+        Text("[CHR]", Modifier.clickable {
+            // TODO: Character Sheet & Misc. Player Stats
         })
     }
     Spacer(Modifier.height(8.dp))
     Row {
+        Text("[<]", Modifier.clickable {
+            // TODO: Stairs up.
+        })
+        Spacer(Modifier.width(8.dp))
         Text("[H]", Modifier.clickable {
             sceneViewModel.movePlayerAndProcessTurn(MovementDirection.LEFT)
         })
@@ -84,6 +103,10 @@ fun ComposelikeTouchControls(
         Spacer(Modifier.width(8.dp))
         Text("[L]", Modifier.clickable {
             sceneViewModel.movePlayerAndProcessTurn(MovementDirection.RIGHT)
+        })
+        Spacer(Modifier.width(8.dp))
+        Text("[>]", Modifier.clickable {
+            // TODO: Stairs down.
         })
     }
     Spacer(Modifier.height(8.dp))
@@ -107,7 +130,10 @@ fun ComposelikeTouchControls(
 fun ComposelikeMessageLog(
     messageLog: List<String>
 ) {
-    LazyColumn {
+    LazyColumn(
+        modifier = Modifier.fillMaxWidth(),
+        horizontalAlignment = Alignment.CenterHorizontally
+    ) {
         for (msg in messageLog.reversed()) {
             item { Text(msg) }
         }
@@ -119,7 +145,8 @@ fun ComposelikeInterface(
     sceneViewModel: SceneViewModel,
     hudStrings: Map<String, String>,
     tilemapStrings: List<String>,
-    messageLog: List<String>
+    messageLog: List<String>,
+    navController: NavController
 ) {
     Column(
         modifier = Modifier.fillMaxWidth(),
@@ -130,7 +157,7 @@ fun ComposelikeInterface(
         // The Tilemap display:
         ComposelikeTilemap(tilemapStrings = tilemapStrings)
         // Touch Controls:
-        ComposelikeTouchControls(sceneViewModel = sceneViewModel)
+        ComposelikeTouchControls(sceneViewModel = sceneViewModel, navController = navController)
         // A LazyColumn of the entire Message Log, starting with the tail end.
         ComposelikeMessageLog(messageLog = messageLog)
     }
