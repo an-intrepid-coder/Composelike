@@ -199,12 +199,9 @@ class GameViewModel(
             return numNeighboringFloorTiles >= neighborThreshold
         }
 
-        /**
-         * Returns a new tilemap as a pure function of the old one.
-         */
-        fun generationPass(tilemap: List<List<Tile>>): List<List<Tile>> {
-            return mapTilemapByTile(
-                tilemap = tilemap,
+        repeat (numPasses) {
+            newTilemap = mapTilemapByTile(
+                tilemap = newTilemap,
                 mapFunction = {
                     if (tileLives(it)) {
                         Tile(it.coordinates, TileType.FLOOR)
@@ -213,10 +210,6 @@ class GameViewModel(
                     }
                 }
             )
-        }
-
-        repeat (numPasses) {
-            newTilemap = generationPass(newTilemap)
         }
         return withEdgeWalls(newTilemap)
     }
@@ -482,7 +475,7 @@ class GameViewModel(
      * wander randomly.
      */
     fun simpleEnemyBehavior(actor: Actor) {
-        if (getPlayer().isNeighbor(actor, actors.value!!)) {
+        if (getPlayer().isNeighbor(actor)) {
             actorsFight(actor, getPlayer())
         } else {
             wanderingBehavior(actor)
@@ -492,7 +485,7 @@ class GameViewModel(
     // TODO: Hunting enemy behavior.
 }
 
-class SceneViewModelFactory(
+class GameViewModelFactory(
     val tilemapCols: Int,
     val tilemapRows: Int,
     val tilemapType: TilemapType

@@ -7,14 +7,15 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
 // TODO: A loading screen for long blocking processes such as map generation.
+//  Generating new maps and populating them takes a bit, for now.
 
 @Composable
 fun ComposelikeApp() {
     val gameViewModel: GameViewModel = viewModel(
-        factory = SceneViewModelFactory(
+        factory = GameViewModelFactory(
             // 100x100 Tilemaps for now.
-            tilemapCols = 100,
-            tilemapRows = 100,
+            tilemapCols = 30,
+            tilemapRows = 30,
             tilemapType = TilemapType.CAVE
             // TODO: Some proper dungeon map types.
         )

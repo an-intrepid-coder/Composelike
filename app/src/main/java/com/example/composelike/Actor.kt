@@ -72,12 +72,10 @@ open class Actor(
     fun rewardXp(xp: Int) { experienceToLevel -= xp }
 
     fun neighboringActors(actorList: List<Actor>): List<Actor> {
-        return actorList.filter {
-            it.coordinates.isNeighbor(coordinates)
-        }
+        return actorList.filter { coordinates.isNeighbor(it.coordinates) }
     }
 
-    fun isNeighbor(other: Actor, actorList: List<Actor>): Boolean {
-        return neighboringActors(actorList).contains(other)
+    fun isNeighbor(other: Actor): Boolean {
+        return coordinates.isNeighbor(other.coordinates)
     }
 }
