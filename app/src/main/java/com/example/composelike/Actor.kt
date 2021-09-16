@@ -58,19 +58,26 @@ open class Actor(
     var health = maxHealth
     var mana = maxMana
     val mapRepresentation = name[0]
+
     fun addItem(item: Item) {
         inventory = inventory.plus(item)
     }
+
     fun removeItem(item: Item) {
         inventory = inventory.minus(item)
     }
+
     fun isAlive(): Boolean { return health > 0 }
+
     fun rewardXp(xp: Int) { experienceToLevel -= xp }
-    fun neighboringActors(gameViewModel: GameViewModel): List<Actor> {
-        return gameViewModel.actors.value!!.filter {
-            kotlin.math.abs(it.coordinates.x - coordinates.x) == 1 &&
-                    kotlin.math.abs(it.coordinates.y - coordinates.y) == 1 &&
-                    it.coordinates != coordinates
+
+    fun neighboringActors(actorList: List<Actor>): List<Actor> {
+        return actorList.filter {
+            it.coordinates.isNeighbor(coordinates)
         }
+    }
+
+    fun isNeighbor(other: Actor, actorList: List<Actor>): Boolean {
+        return neighboringActors(actorList).contains(other)
     }
 }

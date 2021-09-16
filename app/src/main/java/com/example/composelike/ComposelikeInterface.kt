@@ -13,9 +13,7 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
 
 @Composable
-fun ComposelikeHud(
-    hudStrings: Map<String, String>
-) {
+fun ComposelikeHud(hudStrings: Map<String, String>) {
     Row {
         Text(hudStrings["hp"]!!)
         Spacer(Modifier.width(28.dp))
@@ -40,9 +38,7 @@ fun ComposelikeHud(
 }
 
 @Composable
-fun ComposelikeTilemap(
-    tilemapStrings: List<String>
-) {
+fun ComposelikeTilemap(tilemapStrings: List<String>) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -54,10 +50,7 @@ fun ComposelikeTilemap(
 }
 
 @Composable
-fun ComposelikeTouchControls(
-    gameViewModel: GameViewModel,
-    navController: NavController
-) {
+fun ComposelikeTouchControls(gameViewModel: GameViewModel, navController: NavController) {
     Row {
         Text("[MAP]", Modifier.clickable {
             gameViewModel.updateMapScreenStrings()
@@ -129,9 +122,7 @@ fun ComposelikeTouchControls(
 }
 
 @Composable
-fun ComposelikeMessageLog(
-    messageLog: List<String>
-) {
+fun ComposelikeMessageLog(messageLog: List<String>) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -151,10 +142,7 @@ fun ComposelikeMessageLog(
  */
 
 @Composable
-fun ComposelikeInterface(
-    gameViewModel: GameViewModel,
-    navController: NavController
-) {
+fun ComposelikeInterface(gameViewModel: GameViewModel, navController: NavController) {
     val hudStrings by gameViewModel.hudStrings.observeAsState()
     val tilemapStrings by gameViewModel.tilemapStrings.observeAsState()
     val messageLog by gameViewModel.messageLog.observeAsState()

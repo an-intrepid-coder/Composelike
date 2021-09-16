@@ -1,7 +1,5 @@
 package com.example.composelike
 
-import java.lang.Integer.min
-
 enum class ItemType {
     CONSUMABLE,
     EQUIPPABLE,
@@ -10,7 +8,6 @@ enum class ItemType {
 }
 
 data class Item(
-    // TODO: A more robust naming system that allows for item identification and unknowns.
     val displayedName: String,
     val realName: String,
     val itemType: ItemType,

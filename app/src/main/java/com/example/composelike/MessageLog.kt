@@ -13,9 +13,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun MessageLog(
-    gameViewModel: GameViewModel
-) {
+fun MessageLog(gameViewModel: GameViewModel) {
     val messageLog by gameViewModel.messageLog.observeAsState()
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
