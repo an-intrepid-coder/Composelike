@@ -20,11 +20,24 @@ enum class TilemapType {
 }
 
 data class Tile(val coordinates: Coordinates, val tileType: TileType) {
+
     fun isNeighbor(other: Tile): Boolean {
         return coordinates.isNeighbor(other.coordinates)
     }
+
     fun getNeighbors(tilemap: List<List<Tile>>): List<Tile> {
         return tilemap.flatten().filter { isNeighbor(it) }
+    }
+
+    /**
+     * Returns true if the given tile can be walked on.
+     */
+    fun isWalkable(): Boolean {
+        return when (tileType) {
+            TileType.WALL -> false
+            else -> true
+        }
+        // This will grow down the road.
     }
 }
 
@@ -86,18 +99,6 @@ class GameViewModel(
 
     fun getTileOrNull(coordinates: Coordinates): Tile? {
         return tiles.value?.getOrNull(coordinates.y)?.getOrNull(coordinates.x)
-    }
-
-    /**
-     * Returns true if the given tile can be walked on.
-     * // TODO: Make this a member function of Tile.
-     */
-    fun walkableTileType(tile: Tile): Boolean {
-        return when (tile.tileType) {
-            TileType.WALL -> false
-            else -> true
-        }
-        // This will grow down the road.
     }
 
     /**
@@ -278,6 +279,10 @@ class GameViewModel(
         }
     }
 
+    /**
+     * Attempts to move the given Actor in the given movement Direction.
+     * Will fight an Actor of a different faction if one is at the intended destination.
+     */
     fun moveActor(actor: Actor, movementDirection: MovementDirection) {
         val deltas = movementDeltas[movementDirection]!!
         val targetCoordinates = Coordinates(
@@ -286,7 +291,7 @@ class GameViewModel(
         )
         val targetTile = getTileOrNull(targetCoordinates)
         if (targetTile != null) {
-            if (walkableTileType(targetTile) && !tileIsOccupied(targetTile)) {
+            if (targetTile.isWalkable() && !tileIsOccupied(targetTile)) {
                 var newActorsList = actors.value!!.minus(actor)
                 actor.coordinates = targetCoordinates
                 newActorsList = newActorsList.plus(actor)
@@ -316,6 +321,9 @@ class GameViewModel(
         }
     }
 
+    /**
+     * This is the big "next turn" function. Calling it advances the simulation by one turn.
+     */
     fun movePlayerAndProcessTurn(movementDirection: MovementDirection) {
         moveActor(getPlayer(), movementDirection)
         // For now, Player will always go first. For now.
@@ -461,8 +469,11 @@ class GameViewModel(
         addLogMessage("It is somewhere deep below...")
     }
 
+    // TODO: Harmless wanderer behavior.
+
     /**
-     * Will wander in a random direction, if possible. Will not attack.
+     * Will wander in a random direction, if possible. Will not attack Actors of the same
+     * faction.
      */
     fun wanderingBehavior(actor: Actor) { moveActor(actor, MovementDirection.values().random()) }
 
@@ -477,6 +488,8 @@ class GameViewModel(
             wanderingBehavior(actor)
         }
     }
+
+    // TODO: Hunting enemy behavior.
 }
 
 class SceneViewModelFactory(
