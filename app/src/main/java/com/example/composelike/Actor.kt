@@ -7,14 +7,13 @@ enum class ActorFaction {
     // more to come
 }
 
-fun newPlayer(): Actor {
+fun newPlayer(coordinates: Coordinates): Actor {
     return Actor (
-        // TODO: Something less arbitrary for the starting spot:
-        coordinates = Coordinates(2, 5),
+        coordinates = coordinates,
         name = "@player",
         actorFaction = ActorFaction.PLAYER,
         inventory = listOf(
-            // TODO: This list is a placeholder.
+            // This list is a placeholder.
             healingPotion(),
             healingPotion(),
             healingPotion()
@@ -22,10 +21,24 @@ fun newPlayer(): Actor {
     )
 }
 
-// TODO: Some factory functions for simple enemies.
-// TODO: Some simple behavior functions for enemy "AI". Enemy behavior will probably be
-//  implemented using higher-order functions.
-// TODO: Collision detection and combat between Actors.
+fun weakGoblin(coordinates: Coordinates): Actor {
+    val goblin = Actor (
+        coordinates = coordinates,
+        name = "goblin",
+        actorFaction = ActorFaction.ENEMY,
+        maxHealth = 3,
+        maxMana = 1,
+        behaviorType = BehaviorType.SIMPLE_ENEMY,
+        // TODO: An inventory with some loot!
+    )
+    return goblin
+}
+
+enum class BehaviorType {
+    NONE,
+    WANDERING,
+    SIMPLE_ENEMY,
+}
 
 open class Actor(
     // TODO: A class and leveling system! Vaguely DnD-like, for now.
@@ -39,7 +52,8 @@ open class Actor(
     var gold: Int = 0,
     var level: Int = 1,
     var experienceToLevel: Int = 1000,
-    var inventory: List<Item> = listOf()
+    var inventory: List<Item> = listOf(),
+    var behaviorType: BehaviorType = BehaviorType.NONE,
 ) {
     var health = maxHealth
     var mana = maxMana
@@ -49,5 +63,14 @@ open class Actor(
     }
     fun removeItem(item: Item) {
         inventory = inventory.minus(item)
+    }
+    fun isAlive(): Boolean { return health > 0 }
+    fun rewardXp(xp: Int) { experienceToLevel -= xp }
+    fun neighboringActors(gameViewModel: GameViewModel): List<Actor> {
+        return gameViewModel.actors.value!!.filter {
+            kotlin.math.abs(it.coordinates.x - coordinates.x) == 1 &&
+                    kotlin.math.abs(it.coordinates.y - coordinates.y) == 1 &&
+                    it.coordinates != coordinates
+        }
     }
 }

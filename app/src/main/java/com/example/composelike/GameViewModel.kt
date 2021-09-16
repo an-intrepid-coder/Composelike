@@ -4,6 +4,8 @@ import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import java.lang.Math.abs
+import java.lang.Math.random
 
 enum class TileType {
     WALL,
@@ -117,11 +119,27 @@ class GameViewModel(
     fun tileIsOccupied(tile: Tile): Boolean {
         return actorCoordinates().contains(tile.coordinates)
     }
-    fun moveActor(
-        actor: Actor,
-        movementDirection: MovementDirection
-    ) {
-        // TODO: Collision detection!
+    fun actorsFight(attacker: Actor, defender: Actor) {
+        if (attacker == defender) { return }
+        // This is a placeholder combat system, for now:
+        val totalDamage = 1 + attacker.bonusAttack - defender.bonusDefense
+        _actors.value = _actors.value!!.minus(defender)
+        defender.health -= totalDamage
+        addLogMessage("${attacker.name} did $totalDamage dmg to ${defender.name}.")
+        if (defender.isAlive()) {
+            _actors.value = _actors.value!!.plus(defender)
+            addLogMessage("... it has ${defender.health} HP remaining.")
+        } else {
+            addLogMessage("... and killed it!")
+            if (attacker == getPlayer()) {
+                // Only the player will get XP this way, for now.
+                _actors.value = _actors.value!!.minus(attacker)
+                attacker.rewardXp(10 * defender.level) // tentative
+                _actors.value = _actors.value!!.plus(attacker)
+            }
+        }
+    }
+    fun moveActor(actor: Actor, movementDirection: MovementDirection) {
         val deltas = movementDeltas[movementDirection]!!
         val targetCoordinates = Coordinates(
             actor.coordinates.x + deltas.dx,
@@ -134,13 +152,31 @@ class GameViewModel(
                 actor.coordinates = targetCoordinates
                 newActorsList = newActorsList.plus(actor)
                 _actors.value = newActorsList
+            } else if (tileIsOccupied(targetTile)) {
+                // TODO: Combat
+                actorsFight(
+                    attacker = actor,
+                    defender = getActorByCoordinates(targetCoordinates)
+                )
+            } else if (actor == getPlayer()){
+                addLogMessage("You can't move there!")
             }
         }
     }
-    fun movePlayerAndProcessTurn(
-        movementDirection: MovementDirection
-    ) {
+    private fun updateActorBehavior() {
+        for (actor in _actors.value!!) {
+            when (actor.behaviorType) {
+                BehaviorType.WANDERING -> wanderingBehavior(actor)
+                BehaviorType.SIMPLE_ENEMY -> simpleEnemyBehavior(actor)
+                // Many more to come!
+                else -> Unit
+            }
+        }
+    }
+    fun movePlayerAndProcessTurn(movementDirection: MovementDirection) {
         moveActor(getPlayer(), movementDirection)
+        // For now, Player will always go first. For now.
+        updateActorBehavior()
         incrementTurnsPassed()
         if (cameraCoupled) { snapCameraToPlayer() }
         updateHudStrings()
@@ -171,10 +207,7 @@ class GameViewModel(
 
     private var _tilemapStrings = MutableLiveData<List<String>>(listOf())
     var tilemapStrings: LiveData<List<String>> = _tilemapStrings
-    private fun displayStrings(
-        origin: Coordinates,
-        ends: Coordinates
-    ): List<String> {
+    private fun displayStrings(origin: Coordinates, ends: Coordinates): List<String> {
         var newDisplayStrings = listOf<String>()
         for (row in origin.y until ends.y) {
             var rowString = ""
@@ -237,11 +270,32 @@ class GameViewModel(
         _tiles.value = when (tilemapType) {
             TilemapType.TESTING -> generateTestingMap()
         }
-        _actors.value = _actors.value!!.plus(newPlayer())
+        // For now, just testing the player and a goblin:
+        _actors.value = _actors.value!!.plus(newPlayer(Coordinates(2, 5)))
+        _actors.value = _actors.value!!.plus(weakGoblin(Coordinates(3, 4)))
         snapCameraToPlayer()
         updateTilemapStrings()
         updateHudStrings()
         addLogMessage("Welcome to Composelike!")
+        addLogMessage("You must find the Orb of Victory.")
+        addLogMessage("It is somewhere deep below...")
+    }
+
+    /**
+     * Will wander in a random direction, if possible. Will not attack.
+     */
+    fun wanderingBehavior(actor: Actor) { moveActor(actor, MovementDirection.values().random()) }
+
+    /**
+     * If an Actor of a hostile faction is adjacent, the Actor will attack. Otherwise, it will
+     * wander randomly.
+     */
+    fun simpleEnemyBehavior(actor: Actor) {
+        if (actor.neighboringActors(this).contains(getPlayer())) {
+            actorsFight(actor, getPlayer())
+        } else {
+            wanderingBehavior(actor)
+        }
     }
 }
 
