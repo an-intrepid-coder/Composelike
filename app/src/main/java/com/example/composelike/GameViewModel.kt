@@ -8,7 +8,9 @@ import kotlin.system.exitProcess
 
 enum class TileType {
     WALL,
-    FLOOR
+    FLOOR,
+    STAIRS_UP,
+    STAIRS_DOWN,
     // more to come
 }
 
@@ -173,6 +175,23 @@ class GameViewModel(
     }
 
     /**
+     * Returns the given tilemap with a random FLOOR tile turned into a STAIRS_DOWN tile.
+     */
+    fun withRandomStairsDown(tilemap: List<List<Tile>>): List<List<Tile>> {
+        val target = tilemap.flatten().filter { it.tileType == TileType.FLOOR }.random()
+        return mapTilemapByTile(
+            tilemap = tilemap,
+            mapFunction = {
+                if (it == target) {
+                    Tile(it.coordinates, TileType.STAIRS_DOWN)
+                } else {
+                    it
+                }
+            }
+        )
+    }
+
+    /**
      * Uses cellular automata to create a cave-like map.
      */
     private fun generateCaveTilemap(): List<List<Tile>> {
@@ -183,8 +202,8 @@ class GameViewModel(
                 - TODO: Some more parameters.
                 - TODO: Exits and Entrances!
          */
-        val neighborThreshold = 4
-        val numPasses = 2
+        val neighborThreshold = 5
+        val numPasses = 1
 
         var newTilemap: List<List<Tile>> = initTilemap()
 
@@ -211,7 +230,11 @@ class GameViewModel(
                 }
             )
         }
-        return withEdgeWalls(newTilemap)
+        return withRandomStairsDown(
+            withEdgeWalls(
+                newTilemap
+            )
+        )
     }
 
     /**
@@ -366,6 +389,8 @@ class GameViewModel(
                         when (tile.tileType) {
                             TileType.FLOOR -> "."
                             TileType.WALL -> "#"
+                            TileType.STAIRS_DOWN -> ">"
+                            TileType.STAIRS_UP -> "<"
                         }
                     }
                 } else {
@@ -444,24 +469,6 @@ class GameViewModel(
         }
     }
 
-    init {
-        _tiles.value = when (tilemapType) {
-            TilemapType.TESTING -> generateTestingMap()
-            TilemapType.CAVE -> generateCaveTilemap()
-            TilemapType.CLASSIC_DUNGEON -> generateClassicDungeonTilemap()
-        }
-        _actors.value = _actors.value!!.plus(newPlayer(
-            coordinates = validSpawnCoordinates().random()
-        ))
-        generateSmallGoblinPopulation()
-        snapCameraToPlayer()
-        updateTilemapStrings()
-        updateHudStrings()
-        addLogMessage("Welcome to Composelike!")
-        addLogMessage("You must find the Orb of Victory.")
-        addLogMessage("It is somewhere deep below...")
-    }
-
     // TODO: Harmless wanderer behavior.
 
     /**
@@ -483,6 +490,24 @@ class GameViewModel(
     }
 
     // TODO: Hunting enemy behavior.
+
+    init {
+        _tiles.value = when (tilemapType) {
+            TilemapType.TESTING -> generateTestingMap()
+            TilemapType.CAVE -> generateCaveTilemap()
+            TilemapType.CLASSIC_DUNGEON -> generateClassicDungeonTilemap()
+        }
+        _actors.value = _actors.value!!.plus(newPlayer(
+            coordinates = validSpawnCoordinates().random()
+        ))
+        generateSmallGoblinPopulation()
+        snapCameraToPlayer()
+        updateTilemapStrings()
+        updateHudStrings()
+        addLogMessage("Welcome to Composelike!")
+        addLogMessage("You must find the Orb of Victory.")
+        addLogMessage("It is somewhere deep below...")
+    }
 }
 
 class GameViewModelFactory(
