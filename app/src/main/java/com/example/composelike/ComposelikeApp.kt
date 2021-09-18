@@ -13,11 +13,10 @@ import androidx.navigation.compose.rememberNavController
 fun ComposelikeApp() {
     val gameViewModel: GameViewModel = viewModel(
         factory = GameViewModelFactory(
-            // 100x100 Tilemaps for now.
+            // Note: Larger maps (100x100, for example) have noticeable loading times.
             tilemapCols = 30,
             tilemapRows = 30,
             tilemapType = TilemapType.CAVE
-            // TODO: Some proper dungeon map types.
         )
     )
 

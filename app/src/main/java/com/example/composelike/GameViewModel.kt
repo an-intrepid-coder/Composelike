@@ -6,14 +6,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import kotlin.system.exitProcess
 
-enum class TileType {
-    WALL,
-    FLOOR,
-    STAIRS_UP,
-    STAIRS_DOWN,
-    // more to come
-}
-
 enum class TilemapType {
     TESTING,
     CAVE,
@@ -21,64 +13,31 @@ enum class TilemapType {
     // more to come
 }
 
-data class Tile(val coordinates: Coordinates, val tileType: TileType) {
+// TODO: Field of View <-- Next big feature
 
-    fun isNeighbor(other: Tile): Boolean {
-        return coordinates.isNeighbor(other.coordinates)
-    }
-
-    fun getNeighbors(tilemap: List<List<Tile>>): List<Tile> {
-        return tilemap.flatten().filter { isNeighbor(it) }
-    }
-
-    /**
-     * Returns true if the given tile can be walked on.
-     */
-    fun isWalkable(): Boolean {
-        return when (tileType) {
-            TileType.WALL -> false
-            else -> true
-        }
-        // This will grow down the road.
-    }
-}
-
-enum class MovementDirection {
-    UP,
-    DOWN,
-    LEFT,
-    RIGHT,
-    UPLEFT,
-    UPRIGHT,
-    DOWNLEFT,
-    DOWNRIGHT,
-    STATIONARY,
-}
-
-data class MovementDeltas(val dx: Int, val dy: Int)
-
-val movementDeltas = mapOf(
-    MovementDirection.UP to MovementDeltas(0, -1),
-    MovementDirection.DOWN to MovementDeltas(0, 1),
-    MovementDirection.LEFT to MovementDeltas(-1, 0),
-    MovementDirection.RIGHT to MovementDeltas(1, 0),
-    MovementDirection.UPLEFT to MovementDeltas(-1, -1),
-    MovementDirection.UPRIGHT to MovementDeltas(1, -1),
-    MovementDirection.DOWNLEFT to MovementDeltas(-1, 1),
-    MovementDirection.DOWNRIGHT to MovementDeltas(1, 1),
-    MovementDirection.STATIONARY to MovementDeltas(0, 0)
-)
+// TODO: ^ In support of FOV:
+//  (big refactor): Tilemap object will factor much out of this file in a good way. Perhaps by half! <-- Next!
 
 // TODO: Long-Term: Replace tilemapStrings and mapScreenStrings with List<List<Cell>> and
-//  implement technicolor display logic. Monochrome until then.
+//  implement technicolor display logic. Monochrome until then. It will not be easy to both
+//  preserve the non-Canvas use of Text() to display the game, while also adding color on a cell-
+//  by-cell basis. Text() is touchy in the current Canvas API. It may be possible to implement
+//  a LazyColumn + LazyRow block group on a character-by-character basis, controlling for the
+//  color of each single-character String (this is the solution I will try first). Color is not
+//  really optional; monochrome is a placeholder. The game will benefit immensely from a colored
+//  tilemap display. I'd rather not use the Canvas API for it (as I did with Game of Life), as it
+//  is not quite as polished as the rest of the Compose library, yet. This one can wait until the
+//  game is much further along.
 
 class GameViewModel(
     val tilemapCols: Int,
     val tilemapRows: Int,
     val tilemapType: TilemapType,
+    // TODO: Camera object
     var cameraCoordinates: Coordinates = Coordinates(0, 0),
     var cameraCoupled: Boolean = true,
 ) : ViewModel() {
+    // These dimensions are tentative and will be refined:
     private var _tilemapDisplayCols = 36
     private var _tilemapDisplayRows = 12
 
@@ -300,10 +259,10 @@ class GameViewModel(
      * Will fight an Actor of a different faction if one is at the intended destination.
      */
     fun moveActor(actor: Actor, movementDirection: MovementDirection) {
-        val deltas = movementDeltas[movementDirection]!!
         val targetCoordinates = Coordinates(
-            actor.coordinates.x + deltas.dx,
-            actor.coordinates.y + deltas.dy
+            // TODO: When clean, this is what movementDirection should do:
+            actor.coordinates.x + movementDirection.dx,
+            actor.coordinates.y + movementDirection.dy
         )
         val targetTile = getTileOrNull(targetCoordinates)
         if (targetTile != null) {
@@ -475,7 +434,7 @@ class GameViewModel(
      * Will wander in a random direction, if possible. Will not attack Actors of the same
      * faction.
      */
-    fun wanderingBehavior(actor: Actor) { moveActor(actor, MovementDirection.values().random()) }
+    fun wanderingBehavior(actor: Actor) { moveActor(actor, randomMovementDirection()) }
 
     /**
      * If an Actor of a hostile faction is adjacent, the Actor will attack. Otherwise, it will
@@ -492,6 +451,10 @@ class GameViewModel(
     // TODO: Hunting enemy behavior.
 
     init {
+        // TODO: Some loading screen triggers will go here, most likely.
+        addLogMessage("Welcome to Composelike!")
+        addLogMessage("You must find the Orb of Victory.")
+        addLogMessage("It is somewhere deep below...")
         _tiles.value = when (tilemapType) {
             TilemapType.TESTING -> generateTestingMap()
             TilemapType.CAVE -> generateCaveTilemap()
@@ -504,9 +467,6 @@ class GameViewModel(
         snapCameraToPlayer()
         updateTilemapStrings()
         updateHudStrings()
-        addLogMessage("Welcome to Composelike!")
-        addLogMessage("You must find the Orb of Victory.")
-        addLogMessage("It is somewhere deep below...")
     }
 }
 

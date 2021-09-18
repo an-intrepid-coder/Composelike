@@ -62,15 +62,15 @@ fun ComposelikeTouchControls(gameViewModel: GameViewModel, navController: NavCon
         })
         Spacer(Modifier.width(8.dp))
         Text("[Y]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.UPLEFT)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.UpLeft())
         })
         Spacer(Modifier.width(8.dp))
         Text("[K]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.UP)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.Up())
         })
         Spacer(Modifier.width(8.dp))
         Text("[U]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.UPRIGHT)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.UpRight())
         })
         Spacer(Modifier.width(8.dp))
         Text("[INV]", Modifier.clickable {
@@ -89,15 +89,15 @@ fun ComposelikeTouchControls(gameViewModel: GameViewModel, navController: NavCon
         })
         Spacer(Modifier.width(8.dp))
         Text("[H]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.LEFT)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.Left())
         })
         Spacer(Modifier.width(8.dp))
         Text("[.]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.STATIONARY)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.Stationary())
         })
         Spacer(Modifier.width(8.dp))
         Text("[L]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.RIGHT)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.Right())
         })
         Spacer(Modifier.width(8.dp))
         Text("[>]", Modifier.clickable {
@@ -107,15 +107,15 @@ fun ComposelikeTouchControls(gameViewModel: GameViewModel, navController: NavCon
     Spacer(Modifier.height(8.dp))
     Row {
         Text("[B]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.DOWNLEFT)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.DownLeft())
         })
         Spacer(Modifier.width(8.dp))
         Text("[J]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.DOWN)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.Down())
         })
         Spacer(Modifier.width(8.dp))
         Text("[N]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.DOWNRIGHT)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.DownRight())
         })
     }
     Spacer(Modifier.height(8.dp))

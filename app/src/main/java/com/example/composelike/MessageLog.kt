@@ -12,6 +12,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
+// I may have this double as a loading screen. Will test on the morrow.
+
 @Composable
 fun MessageLog(gameViewModel: GameViewModel) {
     val messageLog by gameViewModel.messageLog.observeAsState()

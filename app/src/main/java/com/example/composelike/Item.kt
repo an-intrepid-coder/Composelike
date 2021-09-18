@@ -36,7 +36,7 @@ fun healingPotion(): Item {
             gameViewModel.addLogMessage("It healed you for $healAmount HP!")
             gameViewModel.removeActor(gameViewModel.getPlayer())
             gameViewModel.addActor(updatedPlayer)
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.STATIONARY)
+            gameViewModel.movePlayerAndProcessTurn(MovementDirection.Stationary())
         }
     )
 }
