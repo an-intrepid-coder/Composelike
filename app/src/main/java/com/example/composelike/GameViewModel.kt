@@ -6,33 +6,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import kotlin.system.exitProcess
 
-enum class TilemapType {
-    TESTING,
-    CAVE,
-    CLASSIC_DUNGEON,
-    // more to come
-}
+// TODO: Field of View
 
-// TODO: Field of View <-- Next big feature
-
-// TODO: ^ In support of FOV:
-//  (big refactor): Tilemap object will factor much out of this file in a good way. Perhaps by half! <-- Next!
-
-// TODO: Long-Term: Replace tilemapStrings and mapScreenStrings with List<List<Cell>> and
-//  implement technicolor display logic. Monochrome until then. It will not be easy to both
-//  preserve the non-Canvas use of Text() to display the game, while also adding color on a cell-
-//  by-cell basis. Text() is touchy in the current Canvas API. It may be possible to implement
-//  a LazyColumn + LazyRow block group on a character-by-character basis, controlling for the
-//  color of each single-character String (this is the solution I will try first). Color is not
-//  really optional; monochrome is a placeholder. The game will benefit immensely from a colored
-//  tilemap display. I'd rather not use the Canvas API for it (as I did with Game of Life), as it
-//  is not quite as polished as the rest of the Compose library, yet. This one can wait until the
-//  game is much further along.
+// TODO: Character cells instead of full String rows; will enable better use of color.
 
 class GameViewModel(
-    val tilemapCols: Int,
-    val tilemapRows: Int,
-    val tilemapType: TilemapType,
+    val tilemap: Tilemap,
     // TODO: Camera object
     var cameraCoordinates: Coordinates = Coordinates(0, 0),
     var cameraCoupled: Boolean = true,
@@ -55,154 +34,7 @@ class GameViewModel(
 
     fun snapCameraToPlayer() { cameraCoordinates = getPlayer().coordinates }
 
-    private var _tiles = MutableLiveData<List<List<Tile>>>(listOf())
-    var tiles: LiveData<List<List<Tile>>> = _tiles
-
-    fun getTileOrNull(coordinates: Coordinates): Tile? {
-        return tiles.value?.getOrNull(coordinates.y)?.getOrNull(coordinates.x)
-    }
-
-    /**
-     * Returns true if the given coordinates are on the edge of the tilemap.
-     */
-    fun isEdgeCoordinate(coordinates: Coordinates): Boolean {
-        val col = coordinates.x
-        val row = coordinates.y
-        return (row == 0 || col == 0 || row == tilemapRows - 1 || col == tilemapCols - 1)
-    }
-
-    /**
-     * Generates a big empty room with wall tiles around the edges.
-     */
-    private fun generateTestingMap(): List<List<Tile>> {
-        return withEdgeWalls(initTilemap(TileType.FLOOR))
-    }
-
-    /**
-     * Returns a new tilemap by mapping mapFunction to each tile on the given tilemap.
-     */
-    fun mapTilemapByTile(
-        tilemap: List<List<Tile>>,
-        mapFunction: (Tile) -> Tile,
-    ): List<List<Tile>> {
-        var newTilemap: List<List<Tile>> = listOf()
-        repeat (tilemapRows) { row ->
-            var newRow: List<Tile> = listOf()
-            repeat (tilemapCols) { col ->
-                newRow = newRow.plus(mapFunction(tilemap[row][col]))
-            }
-            newTilemap = newTilemap.plus(listOf(newRow))
-        }
-        return newTilemap
-    }
-
-    /**
-     * Initializes a blank map with all tiles set to initTileType. If no initTileType is provided
-     * then it randomly chooses between FLOOR and WALL for each tile (for now).
-     */
-    fun initTilemap(initTileType: TileType? = null): List<List<Tile>> {
-        fun randomWallOrFloor(): TileType {
-            return if ((0..1).random() == 1) TileType.FLOOR else TileType.WALL
-        }
-        var newTilemap: List<List<Tile>> = listOf()
-        repeat (tilemapRows) { row ->
-            var newRow: List<Tile> = listOf()
-            repeat (tilemapCols) { col ->
-                newRow = newRow.plus(
-                    Tile(
-                        coordinates = Coordinates(col, row),
-                        tileType = initTileType ?: randomWallOrFloor()
-                    )
-                )
-            }
-            newTilemap = newTilemap.plus(listOf(newRow))
-        }
-        return newTilemap
-    }
-
-    /**
-     * Returns the given tilemap with WALL tiles around the edges.
-     */
-    fun withEdgeWalls(tilemap: List<List<Tile>>): List<List<Tile>> {
-        return mapTilemapByTile(tilemap) {
-            if (isEdgeCoordinate(it.coordinates)) {
-                Tile(it.coordinates, TileType.WALL)
-            } else {
-                it
-            }
-        }
-    }
-
-    /**
-     * Returns the given tilemap with a random FLOOR tile turned into a STAIRS_DOWN tile.
-     */
-    fun withRandomStairsDown(tilemap: List<List<Tile>>): List<List<Tile>> {
-        val target = tilemap.flatten().filter { it.tileType == TileType.FLOOR }.random()
-        return mapTilemapByTile(
-            tilemap = tilemap,
-            mapFunction = {
-                if (it == target) {
-                    Tile(it.coordinates, TileType.STAIRS_DOWN)
-                } else {
-                    it
-                }
-            }
-        )
-    }
-
-    /**
-     * Uses cellular automata to create a cave-like map.
-     */
-    private fun generateCaveTilemap(): List<List<Tile>> {
-        /*
-            Recipe Notes:
-                - A higher neighbor threshold requires more passes to "smooth out" and "open up".
-                - TODO: Contiguity checking.
-                - TODO: Some more parameters.
-                - TODO: Exits and Entrances!
-         */
-        val neighborThreshold = 5
-        val numPasses = 1
-
-        var newTilemap: List<List<Tile>> = initTilemap()
-
-        /**
-         * Returns true if the given Tile has enough neighboring tiles which are FLOOR tiles.
-         */
-        fun tileLives(tile: Tile): Boolean {
-            if (tile.tileType == TileType.FLOOR) return true
-            val numNeighboringFloorTiles = tile.getNeighbors(newTilemap).filter {
-                it.tileType == TileType.FLOOR
-            }.size
-            return numNeighboringFloorTiles >= neighborThreshold
-        }
-
-        repeat (numPasses) {
-            newTilemap = mapTilemapByTile(
-                tilemap = newTilemap,
-                mapFunction = {
-                    if (tileLives(it)) {
-                        Tile(it.coordinates, TileType.FLOOR)
-                    } else {
-                        Tile(it.coordinates, TileType.WALL)
-                    }
-                }
-            )
-        }
-        return withRandomStairsDown(
-            withEdgeWalls(
-                newTilemap
-            )
-        )
-    }
-
-    /**
-     * Generates a simple "Rooms and Corridors" map reminiscent of Rogue or Nethack.
-     */
-    private fun generateClassicDungeonTilemap(): List<List<Tile>> {
-        return listOf() // TODO
-    }
-
+    // TODO: An ActorsList or ActorsContainer class.
     private var _actors = MutableLiveData<List<Actor>>(listOf())
     var actors: LiveData<List<Actor>> = _actors
 
@@ -260,13 +92,12 @@ class GameViewModel(
      */
     fun moveActor(actor: Actor, movementDirection: MovementDirection) {
         val targetCoordinates = Coordinates(
-            // TODO: When clean, this is what movementDirection should do:
             actor.coordinates.x + movementDirection.dx,
             actor.coordinates.y + movementDirection.dy
         )
-        val targetTile = getTileOrNull(targetCoordinates)
+        val targetTile = tilemap.getTileOrNull(targetCoordinates)
         if (targetTile != null) {
-            if (targetTile.isWalkable() && !tileIsOccupied(targetTile)) {
+            if (targetTile.walkable && !tileIsOccupied(targetTile)) {
                 var newActorsList = actors.value!!.minus(actor)
                 actor.coordinates = targetCoordinates
                 newActorsList = newActorsList.plus(actor)
@@ -340,17 +171,12 @@ class GameViewModel(
         for (row in origin.y until ends.y) {
             var rowString = ""
             for (col in origin.x until ends.x) {
-                val tile = getTileOrNull(Coordinates(col, row))
+                val tile = tilemap.getTileOrNull(Coordinates(col, row))
                 rowString += if (tile != null) {
                     if (Coordinates(col, row) in actorCoordinates()) {
                         getActorByCoordinates(Coordinates(col, row)).mapRepresentation
                     } else {
-                        when (tile.tileType) {
-                            TileType.FLOOR -> "."
-                            TileType.WALL -> "#"
-                            TileType.STAIRS_DOWN -> ">"
-                            TileType.STAIRS_UP -> "<"
-                        }
+                        tile.mapRepresentation
                     }
                 } else {
                     " "
@@ -378,7 +204,7 @@ class GameViewModel(
 
     fun updateMapScreenStrings() {
         val origin = Coordinates(0, 0)
-        val ends = Coordinates(tilemapCols, tilemapRows)
+        val ends = Coordinates(tilemap.cols, tilemap.rows)
         _mapScreenStrings.value = displayStrings(origin, ends)
     }
 
@@ -403,21 +229,19 @@ class GameViewModel(
     }
 
     /**
-     * Returns a list of Coordinates at which an Actor could spawn (unoccupied FLOOR tiles).
+     * Returns a list of Coordinates at which an Actor could spawn (unoccupied walkable tiles).
      */
     fun validSpawnCoordinates(): List<Coordinates> {
-        return tiles.value!!.flatten().filter {
-            !actorCoordinates().contains(it.coordinates) && it.tileType == TileType.FLOOR
+        return tilemap.tiles().filter {
+            !actorCoordinates().contains(it.coordinates) && it.walkable
         }.map { it.coordinates }
     }
 
     /**
-     * For now, generates a goblin for every 30 FLOOR tiles. Tentative.
+     * For now, generates a goblin for every 30 walkable tiles. Tentative.
      */
     fun generateSmallGoblinPopulation() {
-        val numGoblins = tiles.value!!.flatten()
-            .filter { it.tileType == TileType.FLOOR }
-            .size / 30
+        val numGoblins = tilemap.tiles().filter { it.walkable }.size / 30
         repeat (numGoblins) {
             val spawnCoordinates = validSpawnCoordinates()
             if (spawnCoordinates.isNotEmpty()) {
@@ -455,11 +279,7 @@ class GameViewModel(
         addLogMessage("Welcome to Composelike!")
         addLogMessage("You must find the Orb of Victory.")
         addLogMessage("It is somewhere deep below...")
-        _tiles.value = when (tilemapType) {
-            TilemapType.TESTING -> generateTestingMap()
-            TilemapType.CAVE -> generateCaveTilemap()
-            TilemapType.CLASSIC_DUNGEON -> generateClassicDungeonTilemap()
-        }
+        // TODO: A newPlayer() function:
         _actors.value = _actors.value!!.plus(newPlayer(
             coordinates = validSpawnCoordinates().random()
         ))
@@ -470,13 +290,9 @@ class GameViewModel(
     }
 }
 
-class GameViewModelFactory(
-    val tilemapCols: Int,
-    val tilemapRows: Int,
-    val tilemapType: TilemapType
-): ViewModelProvider.Factory {
+class GameViewModelFactory(val tilemap: Tilemap): ViewModelProvider.Factory {
     override fun <T : ViewModel?> create(modelClass: Class<T>): T {
         @Suppress("UNCHECKED CAST")
-        return GameViewModel(tilemapCols, tilemapRows, tilemapType) as T
+        return GameViewModel(tilemap) as T
     }
 }

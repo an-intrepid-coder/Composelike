@@ -14,9 +14,7 @@ fun ComposelikeApp() {
     val gameViewModel: GameViewModel = viewModel(
         factory = GameViewModelFactory(
             // Note: Larger maps (100x100, for example) have noticeable loading times.
-            tilemapCols = 30,
-            tilemapRows = 30,
-            tilemapType = TilemapType.CAVE
+            tilemap = Tilemap.Cave(60, 40)
         )
     )
 
