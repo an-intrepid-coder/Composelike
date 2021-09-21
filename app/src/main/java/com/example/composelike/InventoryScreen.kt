@@ -16,10 +16,12 @@ import androidx.navigation.NavController
 
 @Composable
 fun InventoryScreen(
-    gameViewModel: GameViewModel,
+    simulationViewModel: SimulationViewModel,
     navController: NavController,
 ) {
-    val inventoryEntries by gameViewModel.inventoryEntries.observeAsState()
+
+    val inventoryEntries by simulationViewModel.inventoryEntries.observeAsState()
+
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -32,8 +34,12 @@ fun InventoryScreen(
         for (entry in inventoryEntries!!) {
             item {
                 Text(entry.displayedName, Modifier.clickable {
-                    entry.effect(gameViewModel)
-                    navController.navigate("composelikeInterface")
+                    // TODO: Verify this still works with the new sim model:
+                    simulationViewModel.simulation()?.let {
+                        //simulationViewModel.entry.effect(it)
+                        simulationViewModel.advanceSimByItem(entry.effect)
+                        navController.navigate("composelikeInterface")
+                    }
                 })
                 Spacer(Modifier.height(8.dp))
             }

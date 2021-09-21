@@ -1,21 +1,17 @@
 package com.example.composelike
 
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
-// TODO: A loading screen for long blocking processes such as map generation.
-//  Generating new maps and populating them takes a bit, for now.
-
 @Composable
 fun ComposelikeApp() {
-    val gameViewModel: GameViewModel = viewModel(
-        factory = GameViewModelFactory(
-            // Note: Larger maps (100x100, for example) have noticeable loading times.
-            tilemap = Tilemap.Cave(60, 40)
-        )
+
+    // TODO: Loading Screen while initializing: <-- Next
+    val simulationViewModel: SimulationViewModel = viewModel(
+        factory = SimulationViewModelFactory()
     )
 
     val navController = rememberNavController()
@@ -29,24 +25,24 @@ fun ComposelikeApp() {
         // TODO: A Stats Screen
         composable("composelikeInterface") {
             ComposelikeInterface(
-                gameViewModel = gameViewModel,
+                simulationViewModel = simulationViewModel,
                 navController = navController
             )
         }
         composable("inventoryScreen") {
             InventoryScreen(
-                gameViewModel = gameViewModel,
+                simulationViewModel = simulationViewModel,
                 navController = navController
             )
         }
         composable("messageLog") {
             MessageLog(
-                gameViewModel = gameViewModel
+                simulationViewModel = simulationViewModel,
             )
         }
         composable("mapScreen") {
             MapScreen(
-                gameViewModel = gameViewModel
+                simulationViewModel = simulationViewModel,
             )
         }
     }

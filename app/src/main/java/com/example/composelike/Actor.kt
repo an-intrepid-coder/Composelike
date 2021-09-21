@@ -7,41 +7,7 @@ enum class ActorFaction {
     // more to come
 }
 
-fun newPlayer(coordinates: Coordinates): Actor {
-    return Actor (
-        coordinates = coordinates,
-        name = "@player",
-        actorFaction = ActorFaction.PLAYER,
-        inventory = listOf(
-            // This list is a placeholder.
-            healingPotion(),
-            healingPotion(),
-            healingPotion()
-        )
-    )
-}
-
-fun weakGoblin(coordinates: Coordinates): Actor {
-    val goblin = Actor (
-        coordinates = coordinates,
-        name = "goblin",
-        actorFaction = ActorFaction.ENEMY,
-        maxHealth = 3,
-        maxMana = 1,
-        behaviorType = BehaviorType.SIMPLE_ENEMY,
-        // TODO: An inventory with some loot!
-    )
-    return goblin
-}
-
-enum class BehaviorType {
-    NONE,
-    WANDERING,
-    SIMPLE_ENEMY,
-}
-
-open class Actor(
-    // TODO: A class and leveling system! Vaguely DnD-like, for now.
+sealed class Actor(
     var coordinates: Coordinates,
     val name: String,
     val actorFaction: ActorFaction = ActorFaction.NEUTRAL,
@@ -53,8 +19,9 @@ open class Actor(
     var level: Int = 1,
     var experienceToLevel: Int = 1000,
     var inventory: List<Item> = listOf(),
-    var behaviorType: BehaviorType = BehaviorType.NONE,
+    var behavior: Behavior? = null,
 ) {
+
     var health = maxHealth
     var mana = maxMana
     val mapRepresentation = name[0]
@@ -63,8 +30,44 @@ open class Actor(
         inventory = inventory.plus(item)
     }
 
-    fun removeItem(item: Item) {
-        inventory = inventory.minus(item)
+    fun removeItem(itemName: String) {
+        inventory = inventory.minus(
+            inventory.first { it.realName == itemName }
+        )
+    }
+
+    /**
+     * Returns the total amount changed by.
+     */
+    fun changeHealth(amount: Int): Int {
+        health += amount
+        return amount
+    }
+
+    /**
+     * Returns net healed amount.
+     */
+    fun heal(amount: Int): Int {
+        if (amount < 0) return 0
+        var netAmount = changeHealth(amount)
+        if (health > maxHealth) {
+            netAmount -= health - maxHealth
+            health = maxHealth
+        }
+        return netAmount
+    }
+
+    /**
+     * Returns net harmed amount.
+     */
+    fun harm(amount: Int): Int {
+        if (amount < 0) return 0
+        var netAmount = changeHealth(-amount)
+        if (health < 0) {
+            netAmount += 0 - netAmount
+            health = 0
+        }
+        return netAmount
     }
 
     fun isAlive(): Boolean { return health > 0 }
@@ -78,4 +81,24 @@ open class Actor(
     fun isNeighbor(other: Actor): Boolean {
         return coordinates.isNeighbor(other.coordinates)
     }
+
+    class Player(coordinates: Coordinates) : Actor(
+        coordinates = coordinates,
+        name = "@player",
+        actorFaction = ActorFaction.PLAYER,
+        inventory = listOf(
+            Item.HealingPotion(),
+            Item.HealingPotion(),
+            Item.HealingPotion(),
+        )
+    )
+
+    class Goblin(coordinates: Coordinates) : Actor(
+        coordinates = coordinates,
+        name = "goblin",
+        actorFaction = ActorFaction.ENEMY,
+        maxHealth = 3,
+        maxMana = 1,
+        behavior = Behavior.SimpleEnemy()
+    )
 }

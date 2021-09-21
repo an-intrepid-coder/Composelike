@@ -9,8 +9,8 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun MapScreen(gameViewModel: GameViewModel) {
-    val mapScreenStrings by gameViewModel.mapScreenStrings.observeAsState()
+fun MapScreen(simulationViewModel: SimulationViewModel) {
+    val mapScreenStrings by simulationViewModel.mapScreenStrings.observeAsState()
     LazyRow {
         item {
             LazyColumn {

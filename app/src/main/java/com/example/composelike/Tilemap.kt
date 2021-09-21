@@ -110,10 +110,10 @@ sealed class Tilemap(
     class Cave(cols: Int, rows: Int) : Tilemap(cols, rows) {
         init {
             applyCellularAutomata(
+                // TODO: This can be fine-tuned a little more.
                 generations = 1,
                 decisionFunction = { tile ->
                     val neighborThreshold = 5
-                    // TODO: Bug: This isn't quite working as expected yet.
                     tile.getNeighbors(tiles())
                         .filter { it.walkable }
                         .size >= neighborThreshold

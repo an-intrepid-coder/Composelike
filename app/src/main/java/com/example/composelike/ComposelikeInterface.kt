@@ -50,10 +50,13 @@ fun ComposelikeTilemap(tilemapStrings: List<String>) {
 }
 
 @Composable
-fun ComposelikeTouchControls(gameViewModel: GameViewModel, navController: NavController) {
+fun ComposelikeTouchControls(
+    simulationViewModel: SimulationViewModel,
+    navController: NavController
+) {
     Row {
         Text("[MAP]", Modifier.clickable {
-            gameViewModel.updateMapScreenStrings()
+            //simulation.updateMapScreenStrings() <-- maybe
             navController.navigate("mapScreen")
         })
         Spacer(Modifier.width(8.dp))
@@ -62,19 +65,19 @@ fun ComposelikeTouchControls(gameViewModel: GameViewModel, navController: NavCon
         })
         Spacer(Modifier.width(8.dp))
         Text("[Y]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.UpLeft())
+            simulationViewModel.advanceSimByMove(MovementDirection.UpLeft())
         })
         Spacer(Modifier.width(8.dp))
         Text("[K]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.Up())
+            simulationViewModel.advanceSimByMove(MovementDirection.Up())
         })
         Spacer(Modifier.width(8.dp))
         Text("[U]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.UpRight())
+            simulationViewModel.advanceSimByMove(MovementDirection.UpRight())
         })
         Spacer(Modifier.width(8.dp))
         Text("[INV]", Modifier.clickable {
-            gameViewModel.updateInventoryEntries()
+            //simulation.updateInventoryEntries() <-- Maybe
             navController.navigate("inventoryScreen")
         })
         Spacer(Modifier.width(8.dp))
@@ -89,15 +92,15 @@ fun ComposelikeTouchControls(gameViewModel: GameViewModel, navController: NavCon
         })
         Spacer(Modifier.width(8.dp))
         Text("[H]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.Left())
+            simulationViewModel.advanceSimByMove(MovementDirection.Left())
         })
         Spacer(Modifier.width(8.dp))
         Text("[.]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.Stationary())
+            simulationViewModel.advanceSimByMove(MovementDirection.Stationary())
         })
         Spacer(Modifier.width(8.dp))
         Text("[L]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.Right())
+            simulationViewModel.advanceSimByMove(MovementDirection.Right())
         })
         Spacer(Modifier.width(8.dp))
         Text("[>]", Modifier.clickable {
@@ -107,15 +110,15 @@ fun ComposelikeTouchControls(gameViewModel: GameViewModel, navController: NavCon
     Spacer(Modifier.height(8.dp))
     Row {
         Text("[B]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.DownLeft())
+            simulationViewModel.advanceSimByMove(MovementDirection.DownLeft())
         })
         Spacer(Modifier.width(8.dp))
         Text("[J]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.Down())
+            simulationViewModel.advanceSimByMove(MovementDirection.Down())
         })
         Spacer(Modifier.width(8.dp))
         Text("[N]", Modifier.clickable {
-            gameViewModel.movePlayerAndProcessTurn(MovementDirection.DownRight())
+            simulationViewModel.advanceSimByMove(MovementDirection.DownRight())
         })
     }
     Spacer(Modifier.height(8.dp))
@@ -133,19 +136,13 @@ fun ComposelikeMessageLog(messageLog: List<String>) {
     }
 }
 
-/*
-    TODO: DEV NOTE: Currently, although the game survives most configuration changes, it does not
-    survive the hard reset prompted by hitting the back button on an empty backStack. In the long-
-    term this will be solved by serializing the GameViewModel and saving it when the program
-    closes or is otherwise destroyed. It can be saved in persistent app storage, and custom
-    backButton behavior can be implemented to force this when needed.
- */
-
 @Composable
-fun ComposelikeInterface(gameViewModel: GameViewModel, navController: NavController) {
-    val hudStrings by gameViewModel.hudStrings.observeAsState()
-    val tilemapStrings by gameViewModel.tilemapStrings.observeAsState()
-    val messageLog by gameViewModel.messageLog.observeAsState()
+fun ComposelikeInterface(simulationViewModel: SimulationViewModel, navController: NavController) {
+
+    val hudStrings by simulationViewModel.hudStrings.observeAsState()
+    val tilemapStrings by simulationViewModel.tilemapStrings.observeAsState()
+    val messageLog by simulationViewModel.messageLogStrings.observeAsState()
+
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -155,7 +152,7 @@ fun ComposelikeInterface(gameViewModel: GameViewModel, navController: NavControl
         // The Tilemap display:
         ComposelikeTilemap(tilemapStrings = tilemapStrings!!)
         // Touch Controls:
-        ComposelikeTouchControls(gameViewModel = gameViewModel, navController = navController)
+        ComposelikeTouchControls(simulationViewModel = simulationViewModel, navController = navController)
         // A LazyColumn of the entire Message Log, starting with the tail end.
         ComposelikeMessageLog(messageLog = messageLog!!)
     }

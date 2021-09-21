@@ -12,11 +12,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
-// I may have this double as a loading screen. Will test on the morrow.
-
 @Composable
-fun MessageLog(gameViewModel: GameViewModel) {
-    val messageLog by gameViewModel.messageLog.observeAsState()
+fun MessageLog(simulationViewModel: SimulationViewModel) {
+
+    val messageLogStrings by simulationViewModel.messageLogStrings.observeAsState()
+
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -26,7 +26,7 @@ fun MessageLog(gameViewModel: GameViewModel) {
             Text("-~-~-~-~-~-")
             Spacer(Modifier.height(8.dp))
         }
-        for (msg in messageLog!!.reversed()) {
+        for (msg in messageLogStrings!!.reversed()) {
             item {
                 Text(msg)
                 Spacer(Modifier.height(8.dp))

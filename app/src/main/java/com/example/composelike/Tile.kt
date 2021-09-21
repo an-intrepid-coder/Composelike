@@ -4,10 +4,13 @@ sealed class Tile(
     val coordinates: Coordinates,
     val mapRepresentation: String,
     val walkable: Boolean = true,
-    val explored: Boolean = false,
-    val visible: Boolean = false,
-    // TODO: Perhaps a variable to track the player's "trail", for some hunting monsters to follow.
     ) {
+
+    // TODO: FOV System
+    //var explored: Boolean = false
+    //var visible: Boolean = false
+
+    // TODO: Perhaps a variable to track the player's "trail", for some hunting monsters to follow.
 
     fun isNeighbor(other: Tile): Boolean { return coordinates.isNeighbor(other.coordinates) }
 
