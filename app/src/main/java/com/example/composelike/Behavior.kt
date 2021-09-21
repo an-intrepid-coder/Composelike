@@ -8,16 +8,20 @@ sealed class Behavior(
 
     class WanderingEnemy : Behavior(
         effect = { actor, simulation ->
-            simulation.moveActor(actor, randomMovementDirection())
+            simulation.actors.moveActor(actor, randomMovementDirection(), simulation)
         }
     )
 
     class SimpleEnemy : Behavior(
         effect = { actor, simulation ->
-            if (simulation.getPlayer().isNeighbor(actor)) {
-                simulation.actorsFight(actor, simulation.getPlayer())
+            if (simulation.actors.getPlayer().isNeighbor(actor)) {
+                simulation.actors.actorsFight(
+                    attacker = actor,
+                    defender = simulation.actors.getPlayer(),
+                    simulation = simulation,
+                )
             } else {
-                simulation.moveActor(actor, randomMovementDirection())
+                simulation.actors.moveActor(actor, randomMovementDirection(), simulation)
             }
         }
     )

@@ -31,7 +31,7 @@ fun ComposelikeApp() {
             InventoryScreen(simulationViewModel, navController)
         }
         composable("messageLog") {
-            MessageLog(simulationViewModel)
+            MessageLogScreen(simulationViewModel)
         }
         composable("mapScreen") {
             MapScreen(simulationViewModel)

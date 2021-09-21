@@ -55,7 +55,7 @@ class SimulationViewModel : ViewModel() {
 
     private fun updateInventoryEntries() {
         var newEntries = listOf<Item>()
-        val playerInventory = _simulation?.getPlayer()?.inventory
+        val playerInventory = _simulation?.actors?.getPlayer()?.inventory
         if (playerInventory != null) {
             for (item in playerInventory) {
                 newEntries = newEntries.plus(item)
@@ -68,7 +68,7 @@ class SimulationViewModel : ViewModel() {
     var messageLogStrings: LiveData<List<String>> = _messageLogStrings
 
     private fun updateMessageLogStrings() {
-        _messageLogStrings.value = _simulation?.messageLog()
+        _messageLogStrings.value = _simulation?.messageLog?.messages()
     }
 
     fun update() {
