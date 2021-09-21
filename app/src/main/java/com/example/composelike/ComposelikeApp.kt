@@ -9,7 +9,6 @@ import androidx.navigation.compose.rememberNavController
 @Composable
 fun ComposelikeApp() {
 
-    // TODO: Loading Screen while initializing: <-- Next
     val simulationViewModel: SimulationViewModel = viewModel(
         factory = SimulationViewModelFactory()
     )
@@ -17,33 +16,25 @@ fun ComposelikeApp() {
     val navController = rememberNavController()
     NavHost(
         navController = navController,
-        startDestination = "composelikeInterface"
+        startDestination = "loadingScreen"
     ) {
-        // TODO: A Main Menu
         // TODO: An Options Screen
         // TODO: A Character Screen
         // TODO: A Stats Screen
+        composable("loadingScreen") {
+            LoadingScreen(simulationViewModel, navController)
+        }
         composable("composelikeInterface") {
-            ComposelikeInterface(
-                simulationViewModel = simulationViewModel,
-                navController = navController
-            )
+            ComposelikeInterface(simulationViewModel, navController)
         }
         composable("inventoryScreen") {
-            InventoryScreen(
-                simulationViewModel = simulationViewModel,
-                navController = navController
-            )
+            InventoryScreen(simulationViewModel, navController)
         }
         composable("messageLog") {
-            MessageLog(
-                simulationViewModel = simulationViewModel,
-            )
+            MessageLog(simulationViewModel)
         }
         composable("mapScreen") {
-            MapScreen(
-                simulationViewModel = simulationViewModel,
-            )
+            MapScreen(simulationViewModel)
         }
     }
 }

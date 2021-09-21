@@ -1,9 +1,6 @@
 package com.example.composelike
 
-import androidx.lifecycle.LiveData
-import androidx.lifecycle.MutableLiveData
-import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.*
 
 class SimulationViewModel : ViewModel() {
     // These dimensions are tentative and will be refined:
@@ -13,15 +10,11 @@ class SimulationViewModel : ViewModel() {
     private var _simulation: ComposelikeSimulation? = null
     fun simulation(): ComposelikeSimulation? = _simulation
 
-    // TODO: Concurrency
-    fun initSimulation() {
-        // TODO -- concurrency
+    fun loadSimulation() {
         _simulation = ComposelikeSimulation()
         _simulation?.initSimulation()
-        update()
     }
 
-    // TODO: Concurrency
     fun advanceSimByItem(itemEffect: (ComposelikeSimulation) -> Unit) {
         _simulation?.let {
             _simulation!!.takeEffect(itemEffect)
@@ -30,10 +23,9 @@ class SimulationViewModel : ViewModel() {
         }
     }
 
-    // TODO: Concurrency
     fun advanceSimByMove(movementDirection: MovementDirection) {
         _simulation?.let {
-            _simulation = _simulation!!.nextTurnByPlayerMove(movementDirection)
+            _simulation!!.nextTurnByPlayerMove(movementDirection)
             update()
         }
     }
@@ -79,17 +71,12 @@ class SimulationViewModel : ViewModel() {
         _messageLogStrings.value = _simulation?.messageLog()
     }
 
-    private fun update() {
+    fun update() {
         updateHudStrings()
         updateTilemapStrings()
         updateMapScreenStrings()
         updateInventoryEntries()
         updateMessageLogStrings()
-    }
-
-    init {
-        // placeholder // TODO: Concurrent solution.
-        initSimulation()
     }
 }
 

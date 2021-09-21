@@ -110,10 +110,18 @@ sealed class Tilemap(
     class Cave(cols: Int, rows: Int) : Tilemap(cols, rows) {
         init {
             applyCellularAutomata(
-                // TODO: This can be fine-tuned a little more.
+                /*
+                    Recipe Notes:
+                        - (generations = 3, neighborTHreshold = 5) results in isolated cave "rooms"
+                          that will ideally be joined together by hallways.
+                        - (generations = 1, neighborThreshold = 4) results in large open rooms
+                          with a "cave"-like appearance. It's a good "basic" Cave.
+                        - More to come, for sure.
+                    TODO: Fine-tune with more parameters and possibly create sub-classes of Cave.
+                 */
                 generations = 1,
                 decisionFunction = { tile ->
-                    val neighborThreshold = 5
+                    val neighborThreshold = 4
                     tile.getNeighbors(tiles())
                         .filter { it.walkable }
                         .size >= neighborThreshold

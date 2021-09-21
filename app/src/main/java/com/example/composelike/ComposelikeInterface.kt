@@ -15,24 +15,24 @@ import androidx.navigation.NavController
 @Composable
 fun ComposelikeHud(hudStrings: Map<String, String>) {
     Row {
-        Text(hudStrings["hp"]!!)
+        Text(hudStrings.getOrElse("hp") { "0" })
         Spacer(Modifier.width(28.dp))
-        Text(hudStrings["mp"]!!)
+        Text(hudStrings.getOrElse("mp") { "0" })
         Spacer(Modifier.width(28.dp))
-        Text(hudStrings["turnsPassed"]!!)
+        Text(hudStrings.getOrElse("turnsPassed") { "0" })
     }
     Row {
-        Text(hudStrings["bonusAttack"]!!)
+        Text(hudStrings.getOrElse("bonusAttack") { "0" })
         Spacer(Modifier.width(28.dp))
-        Text(hudStrings["bonusDefense"]!!)
+        Text(hudStrings.getOrElse("bonusDefense") { "0" })
         Spacer(Modifier.width(28.dp))
-        Text(hudStrings["playerLevel"]!!)
+        Text(hudStrings.getOrElse("playerLevel") { "0" })
     }
-    Text(hudStrings["experienceToLevel"]!!) // TODO: XP Bar!
+    Text(hudStrings.getOrElse("experienceToLevel") { "0" }) // TODO: XP Bar!
     Row {
-        Text(hudStrings["dungeonLevel"]!!)
+        Text(hudStrings.getOrElse("dungeonLevel") { "0" })
         Spacer(Modifier.width(28.dp))
-        Text(hudStrings["gold"]!!)
+        Text(hudStrings.getOrElse("gold") { "0" })
     }
     Spacer(Modifier.height(8.dp))
 }
@@ -56,7 +56,6 @@ fun ComposelikeTouchControls(
 ) {
     Row {
         Text("[MAP]", Modifier.clickable {
-            //simulation.updateMapScreenStrings() <-- maybe
             navController.navigate("mapScreen")
         })
         Spacer(Modifier.width(8.dp))
@@ -77,7 +76,6 @@ fun ComposelikeTouchControls(
         })
         Spacer(Modifier.width(8.dp))
         Text("[INV]", Modifier.clickable {
-            //simulation.updateInventoryEntries() <-- Maybe
             navController.navigate("inventoryScreen")
         })
         Spacer(Modifier.width(8.dp))
@@ -148,12 +146,12 @@ fun ComposelikeInterface(simulationViewModel: SimulationViewModel, navController
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Some HUD information:
-        ComposelikeHud(hudStrings = hudStrings!!)
+        if (hudStrings != null) ComposelikeHud(hudStrings!!)
         // The Tilemap display:
-        ComposelikeTilemap(tilemapStrings = tilemapStrings!!)
+        if (tilemapStrings != null) ComposelikeTilemap(tilemapStrings!!)
         // Touch Controls:
-        ComposelikeTouchControls(simulationViewModel = simulationViewModel, navController = navController)
+        ComposelikeTouchControls(simulationViewModel, navController)
         // A LazyColumn of the entire Message Log, starting with the tail end.
-        ComposelikeMessageLog(messageLog = messageLog!!)
+        if (messageLog != null) ComposelikeMessageLog(messageLog!!)
     }
 }

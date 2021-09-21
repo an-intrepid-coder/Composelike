@@ -100,17 +100,14 @@ class ComposelikeSimulation(
         }
     }
 
-    // TODO: Concurrency!
-    fun nextTurnByPlayerMove(movementDirection: MovementDirection): ComposelikeSimulation {
+    fun nextTurnByPlayerMove(movementDirection: MovementDirection) {
         // For now, Player will always go first. For now.
         moveActor(getPlayer(), movementDirection)
         updateActorBehavior()
         _turnsPassed++
         if (_cameraCoupled) { snapCameraToPlayer() }
-        return this
     }
 
-    // TODO: Concurrency
     fun takeEffect(effect: (ComposelikeSimulation) -> Unit) { effect(this) }
 
     // TODO: A HudStrings class.
@@ -201,9 +198,12 @@ class ComposelikeSimulation(
         }
     }
 
-    // TODO: This should be a suspend function.
+    /**
+     * This is a heavy function. Calling it in the main thread will result
+     * in many skipped frames.
+     */
     fun initSimulation() {
-        _tilemap = Tilemap.Testing(100, 100)
+        _tilemap = Tilemap.Cave(100, 100)
         generateSmallGoblinPopulation()
         spawnPlayer()
         snapCameraToPlayer()
