@@ -34,9 +34,7 @@ fun InventoryScreen(
         for (entry in inventoryEntries!!) {
             item {
                 Text(entry.displayedName, Modifier.clickable {
-                    // TODO: Verify this still works with the new sim model:
                     simulationViewModel.simulation()?.let {
-                        //simulationViewModel.entry.effect(it)
                         simulationViewModel.advanceSimByItem(entry.effect)
                         navController.navigate("composelikeInterface")
                     }

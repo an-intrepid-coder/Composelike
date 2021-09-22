@@ -36,10 +36,24 @@ sealed class Actor(
         )
     }
 
+    // TODO: Next: Real FOV function instead of this placeholder, now that the system is in place.
+    fun canSeeTile(tile: Tile, simulation: ComposelikeSimulation): Boolean {
+        /*
+            DEV NOTE: To start with, as a *placeholder*, I am going to brute force a
+            small 5x5 area without considering obstacles. Will go from there.
+            -- Note: Does not use the simulation yet, but will for obstacle detection & more.
+
+            For calculating shadows and obstacles I will ultimately need to implement a ray tracing
+            system.
+         */
+        val visionDistance = 5 // for now
+        return tile.coordinates.euclideanDistance(coordinates) <= visionDistance
+    }
+
     /**
      * Returns the total amount changed by.
      */
-    fun changeHealth(amount: Int): Int {
+    private fun changeHealth(amount: Int): Int {
         health += amount
         return amount
     }

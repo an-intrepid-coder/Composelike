@@ -1,8 +1,6 @@
 package com.example.composelike
 
-class ComposelikeSimulation(
-    // TODO: Some options and parameters.
-) {
+class ComposelikeSimulation {
     private var _turnsPassed = 0
     private var _dungeonlevel = 1
     private val _camera = Camera()
@@ -28,6 +26,7 @@ class ComposelikeSimulation(
     }
 
     // TODO: Display Strings class
+    // TODO: FOV toggles and other toggleable filters.
     // TODO: Long-Term: CharacterCell class, replacing the String-based approach.
     private fun exportDisplayStrings(origin: Coordinates, ends: Coordinates): List<String>? {
         if (tilemap == null) return null
@@ -37,10 +36,16 @@ class ComposelikeSimulation(
             for (col in origin.x until ends.x) {
                 val tile = tilemap!!.getTileOrNull(Coordinates(col, row))
                 rowString += if (tile != null) {
-                    if (Coordinates(col, row) in actors.actorCoordinates()) {
+                    if (Coordinates(col, row) in actors.actorCoordinates() && tile.visible) {
                         actors.getActorByCoordinates(Coordinates(col, row)).mapRepresentation
+                    } else if (tile.explored){
+                        if (tile.name == "Floor Tile") {
+                            tile.mapRepresentation[if (tile.visible) 1 else 0]
+                        } else {
+                            tile.mapRepresentation
+                        }
                     } else {
-                        tile.mapRepresentation
+                        " "
                     }
                 } else {
                     " "
@@ -71,11 +76,10 @@ class ComposelikeSimulation(
         return exportDisplayStrings(origin, ends)
     }
 
-    // The following functions definitely belong here:
-
     fun nextTurnByPlayerMove(movementDirection: MovementDirection) {
         // For now, Player will always go first. For now.
         actors.moveActor(actors.getPlayer(), movementDirection, this)
+        tilemap?.setFieldOfView(actors.getPlayer(), this)
         actors.updateActorBehavior(this)
         _turnsPassed++
         if (_camera.coupled()) { _camera.snapTo(actors.getPlayer().coordinates) }
@@ -110,14 +114,15 @@ class ComposelikeSimulation(
         }
     }
 
-    /**
-     * This is a heavy function. Calling it in the main thread will result
-     * in many skipped frames.
-     */
     fun initSimulation() {
-        tilemap = Tilemap.Cave(100, 100)
+        /*
+         * This is a heavy function. Calling it in the main thread will result
+         * in many skipped frames.
+         */
+        tilemap = Tilemap.Testing(40, 40)
         generateSmallGoblinPopulation()
         spawnPlayer()
+        tilemap?.setFieldOfView(actors.getPlayer(), this)
         _camera.snapTo(actors.getPlayer().coordinates)
         messageLog.addMessage("Welcome to Composelike!")
     }

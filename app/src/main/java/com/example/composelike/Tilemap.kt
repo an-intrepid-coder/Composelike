@@ -13,7 +13,13 @@ sealed class Tilemap(
         return _tiles.getOrNull(coordinates.y)?.getOrNull(coordinates.x)
     }
 
-    fun isEdgeCoordinate(coordinates: Coordinates): Boolean {
+    fun setFieldOfView(actor: Actor, simulation: ComposelikeSimulation) {
+        _tiles = mappedTiles { tile ->
+            if (actor.canSeeTile(tile, simulation)) tile.seen() else tile.unSeen()
+        }
+    }
+
+    private fun isEdgeCoordinate(coordinates: Coordinates): Boolean {
         val col = coordinates.x
         val row = coordinates.y
         return (row == 0 || col == 0 || row == rows - 1 || col == cols - 1)
@@ -49,7 +55,7 @@ sealed class Tilemap(
     /**
      * Returns new tiles by mapping mapFunction to each tile.
      */
-    fun mappedTiles(mapFunction: (Tile) -> Tile): List<List<Tile>> {
+    private fun mappedTiles(mapFunction: (Tile) -> Tile): List<List<Tile>> {
         var newTilemap: List<List<Tile>> = listOf()
         repeat (rows) { row ->
             var newRow: List<Tile> = listOf()

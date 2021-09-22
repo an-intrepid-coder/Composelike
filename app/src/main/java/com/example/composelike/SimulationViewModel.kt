@@ -5,7 +5,7 @@ import androidx.lifecycle.*
 class SimulationViewModel : ViewModel() {
     // These dimensions are tentative and will be refined:
     private var _tilemapDisplayCols = 36
-    private var _tilemapDisplayRows = 12
+    private var _tilemapDisplayRows = 16
 
     private var _simulation: ComposelikeSimulation? = null
     fun simulation(): ComposelikeSimulation? = _simulation
