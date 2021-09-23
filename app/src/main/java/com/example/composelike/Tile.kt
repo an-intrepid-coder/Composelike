@@ -7,6 +7,7 @@ sealed class Tile(
     val walkable: Boolean = true,
     var explored: Boolean = false,
     var visible: Boolean = false,
+    val blocksSightLine: Boolean = false,
     ) {
     // TODO: Perhaps a variable to track the player's "trail", for some hunting monsters to follow.
 
@@ -25,17 +26,31 @@ sealed class Tile(
         return this
     }
 
-    class Wall(coordinates: Coordinates) :
-        Tile("Wall Tile", coordinates, "#", walkable = false)
+    class Wall(coordinates: Coordinates) : Tile(
+        name = "Wall Tile",
+        coordinates = coordinates,
+        mapRepresentation = "#",
+        walkable = false,
+        blocksSightLine = true
+    )
 
-    class Floor(coordinates: Coordinates) :
-        Tile("Floor Tile", coordinates, " .")
+    class Floor(coordinates: Coordinates) : Tile(
+        name = "Floor Tile",
+        coordinates = coordinates,
+        mapRepresentation = " ."
+    )
 
-    class StairsUp(coordinates: Coordinates) :
-        Tile("Stairs Up", coordinates, "<")
+    class StairsUp(coordinates: Coordinates) : Tile(
+        name = "Stairs Up",
+        coordinates = coordinates,
+        mapRepresentation = "<"
+    )
 
-    class StairsDown(coordinates: Coordinates) :
-        Tile("Stairs Down", coordinates, ">")
+    class StairsDown(coordinates: Coordinates) : Tile(
+        name = "Stairs Down",
+        coordinates = coordinates,
+        mapRepresentation = ">"
+    )
 }
 
 fun randomWallOrFloorTile(coordinates: Coordinates): Tile {

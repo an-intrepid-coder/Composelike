@@ -108,6 +108,7 @@ class ComposelikeSimulation {
         }
     }
 
+    // TODO: Some kind of error if the player is unable to spawn.
     private fun spawnPlayer() {
         validSpawnCoordinates()?.let {
             if (it.isNotEmpty()) actors.addActor(Actor.Player(it.random()))
@@ -115,11 +116,7 @@ class ComposelikeSimulation {
     }
 
     fun initSimulation() {
-        /*
-         * This is a heavy function. Calling it in the main thread will result
-         * in many skipped frames.
-         */
-        tilemap = Tilemap.Testing(40, 40)
+        tilemap = Tilemap.Cave(40, 40)
         generateSmallGoblinPopulation()
         spawnPlayer()
         tilemap?.setFieldOfView(actors.getPlayer(), this)

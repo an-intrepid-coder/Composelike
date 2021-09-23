@@ -1,6 +1,8 @@
 package com.example.composelike
 
 import androidx.lifecycle.*
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 
 class SimulationViewModel : ViewModel() {
     // These dimensions are tentative and will be refined:
@@ -10,24 +12,39 @@ class SimulationViewModel : ViewModel() {
     private var _simulation: ComposelikeSimulation? = null
     fun simulation(): ComposelikeSimulation? = _simulation
 
+    private var _turnLocked = false
+
     fun loadSimulation() {
+        // Note: Calling this in the main thread will result in skipped frames.
         _simulation = ComposelikeSimulation()
         _simulation?.initSimulation()
     }
 
     fun advanceSimByItem(itemEffect: (ComposelikeSimulation) -> Unit) {
-        _simulation?.let {
-            _simulation!!.takeEffect(itemEffect)
-            advanceSimByMove(MovementDirection.Stationary())
-            update()
+        if (!_turnLocked) {
+            _simulation?.let {
+                viewModelScope.launch {
+                    _turnLocked = true
+                    _simulation!!.takeEffect(itemEffect)
+                    advanceSimByMove(MovementDirection.Stationary())
+                    _turnLocked = false
+                }
+            }
         }
+        update()
     }
 
     fun advanceSimByMove(movementDirection: MovementDirection) {
-        _simulation?.let {
-            _simulation!!.nextTurnByPlayerMove(movementDirection)
-            update()
+        if (!_turnLocked) {
+            _simulation?.let {
+                viewModelScope.launch {
+                    _turnLocked = true
+                    _simulation!!.nextTurnByPlayerMove(movementDirection)
+                    _turnLocked = false
+                }
+            }
         }
+        update()
     }
 
     private var _hudStrings = MutableLiveData<Map<String, String>>(mapOf())

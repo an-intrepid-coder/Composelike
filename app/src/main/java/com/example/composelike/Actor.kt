@@ -15,6 +15,7 @@ sealed class Actor(
     var maxMana: Int = 3,
     var bonusAttack: Int = 0,
     var bonusDefense: Int = 0,
+    var visionDistance: Int = 8,
     var gold: Int = 0,
     var level: Int = 1,
     var experienceToLevel: Int = 1000,
@@ -36,18 +37,14 @@ sealed class Actor(
         )
     }
 
-    // TODO: Next: Real FOV function instead of this placeholder, now that the system is in place.
     fun canSeeTile(tile: Tile, simulation: ComposelikeSimulation): Boolean {
-        /*
-            DEV NOTE: To start with, as a *placeholder*, I am going to brute force a
-            small 5x5 area without considering obstacles. Will go from there.
-            -- Note: Does not use the simulation yet, but will for obstacle detection & more.
-
-            For calculating shadows and obstacles I will ultimately need to implement a ray tracing
-            system.
-         */
-        val visionDistance = 5 // for now
-        return tile.coordinates.euclideanDistance(coordinates) <= visionDistance
+        if (simulation.tilemap == null) return false
+        if (tile.coordinates.euclideanDistance(coordinates) > visionDistance) return false
+        val line = coordinates.bresenhamLine(tile.coordinates)
+        return simulation.tilemap!!.tiles()
+            .asSequence()
+            .filter { line.contains(it.coordinates) }
+            .none { it.blocksSightLine }
     }
 
     /**

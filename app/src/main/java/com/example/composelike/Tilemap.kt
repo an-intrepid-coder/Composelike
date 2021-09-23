@@ -1,10 +1,22 @@
 package com.example.composelike
 
 sealed class Tilemap(
-    val cols: Int,
-    val rows: Int,
+    initCols: Int,
+    initRows: Int,
     initTileType: String? = null,
 ) {
+    private val _dimensionCap = 40
+    /*
+        Dev Note: There is a limit to how big a Tilemap can be before it causes performance
+        issues. TODO: Some kind of resource check during map initialization.
+
+        This is only an issue for very large maps (greater than 100x100) but it would be nice
+        to have an optimized solution down the road which can handle such maps. For now, 40x40
+        is a very safe, practical, and performant cap.
+     */
+    val cols = if (initCols > _dimensionCap) _dimensionCap else initCols
+    val rows = if (initRows > _dimensionCap) _dimensionCap else initRows
+
     private var _tiles: List<List<Tile>> = initTiles(initTileType)
 
     fun tiles(): List<Tile> { return _tiles.flatten() }
@@ -56,6 +68,12 @@ sealed class Tilemap(
      * Returns new tiles by mapping mapFunction to each tile.
      */
     private fun mappedTiles(mapFunction: (Tile) -> Tile): List<List<Tile>> {
+        /*
+            Optimization Note: Map generation relies on calling this many times over. Since it
+            is an up-front cost to loading a map it's not a huge deal, but there is a lot of
+            room to do it better. This is a placeholder solution for sure since map generation
+            will get much more complicated.
+         */
         var newTilemap: List<List<Tile>> = listOf()
         repeat (rows) { row ->
             var newRow: List<Tile> = listOf()
@@ -118,7 +136,7 @@ sealed class Tilemap(
             applyCellularAutomata(
                 /*
                     Recipe Notes:
-                        - (generations = 3, neighborTHreshold = 5) results in isolated cave "rooms"
+                        - (generations = 3, neighborThreshold = 5) results in isolated cave "rooms"
                           that will ideally be joined together by hallways.
                         - (generations = 1, neighborThreshold = 4) results in large open rooms
                           with a "cave"-like appearance. It's a good "basic" Cave.
