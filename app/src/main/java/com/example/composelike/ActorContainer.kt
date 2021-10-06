@@ -12,11 +12,15 @@ class ActorContainer {
 
     fun actorCoordinates(): List<Coordinates> { return _actors.map { it.coordinates } }
 
-    fun getActorByCoordinates(coordinates: Coordinates): Actor {
-        return _actors.first { it.coordinates == coordinates }
+    fun getActorByCoordinates(coordinates: Coordinates): Actor? {
+        return _actors.firstOrNull { it.coordinates == coordinates }
     }
 
-    fun getPlayer(): Actor { return _actors.first { it.actorFaction == ActorFaction.PLAYER } }
+    fun getPlayer(): Actor {
+        val player = _actors.firstOrNull { it.actorFaction == ActorFaction.PLAYER }
+        if (player == null) exitProcess(0) // TODO: Real game over function.
+        else return player
+    }
 
     fun actorsFight(
         attacker: Actor,
@@ -32,14 +36,9 @@ class ActorContainer {
             .messageLog.addMessage("${attacker.name} did $totalDamage dmg to ${defender.name}.")
         if (defender.isAlive()) {
             _actors = _actors.plus(defender)
-            simulation
-                .messageLog.addMessage("... it has ${defender.health} HP remaining.")
+            simulation.messageLog.addMessage("... it has ${defender.health} HP remaining.")
         } else {
-            simulation
-                .messageLog.addMessage("... and killed it!")
-            if (defender == getPlayer()) {
-                exitProcess(0) // TODO: More graceful game-over condition!
-            }
+            simulation.messageLog.addMessage("... and killed it!")
             if (attacker == getPlayer()) {
                 // Only the player will get XP this way, for now.
                 _actors = _actors.minus(attacker)
@@ -54,6 +53,7 @@ class ActorContainer {
      * Will fight an Actor of a different faction if one is at the intended destination.
      */
     fun moveActor(
+        // TODO: This can be optimized.
         actor: Actor,
         movementDirection: MovementDirection,
         simulation: ComposelikeSimulation,
@@ -72,11 +72,11 @@ class ActorContainer {
                 simulation.actors.addActor(actor)
             } else if (tileIsOccupied) {
                 val defender = simulation.actors.getActorByCoordinates(targetCoordinates)
-                if (defender.actorFaction != actor.actorFaction) {
+                if (defender!!.actorFaction != actor.actorFaction) {
                     simulation.actors.actorsFight(
                         attacker = actor,
                         defender = defender,
-                        simulation = simulation // meta! Will that work? Maybe... must test. TODO
+                        simulation = simulation
                     )
                 }
             } else if (actor == simulation.actors.getPlayer()){

@@ -1,7 +1,8 @@
 package com.example.composelike
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.*
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
 class SimulationViewModel : ViewModel() {
@@ -14,6 +15,7 @@ class SimulationViewModel : ViewModel() {
 
     private var _turnLocked = false
 
+    @RequiresApi(Build.VERSION_CODES.N)
     fun loadSimulation() {
         // Note: Calling this in the main thread will result in skipped frames.
         _simulation = ComposelikeSimulation()
@@ -26,7 +28,7 @@ class SimulationViewModel : ViewModel() {
                 viewModelScope.launch {
                     _turnLocked = true
                     _simulation!!.takeEffect(itemEffect)
-                    advanceSimByMove(MovementDirection.Stationary())
+                    _simulation!!.nextTurnByPlayerMove(MovementDirection.Stationary())
                     _turnLocked = false
                 }
             }

@@ -1,12 +1,17 @@
 package com.example.composelike
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+
 class ComposelikeSimulation {
     private var _turnsPassed = 0
-    private var _dungeonlevel = 1
+    private var _dungeonLevel = 1
     private val _camera = Camera()
     var tilemap: Tilemap? = null
     val actors = ActorContainer()
     val messageLog = MessageLog()
+
+    val debugMode = false //true
 
     // TODO: A HudStrings class.
     fun exportHudStrings(): Map<String, String> {
@@ -20,14 +25,14 @@ class ComposelikeSimulation {
             "playerLevel" to "PLVL: " + player.level.toString(),
             // TODO: XP Bar!
             "experienceToLevel" to "XP-TO-GO: " + player.experienceToLevel.toString(),
-            "dungeonLevel" to "DLVL: ${_dungeonlevel}",
-            "turnsPassed" to "Turns: ${_turnsPassed}",
+            "dungeonLevel" to "DLVL: $_dungeonLevel",
+            "turnsPassed" to "Turns: $_turnsPassed",
         )
     }
 
     // TODO: Display Strings class
-    // TODO: FOV toggles and other toggleable filters.
     // TODO: Long-Term: CharacterCell class, replacing the String-based approach.
+
     private fun exportDisplayStrings(origin: Coordinates, ends: Coordinates): List<String>? {
         if (tilemap == null) return null
         var newDisplayStrings = listOf<String>()
@@ -37,7 +42,7 @@ class ComposelikeSimulation {
                 val tile = tilemap!!.getTileOrNull(Coordinates(col, row))
                 rowString += if (tile != null) {
                     if (Coordinates(col, row) in actors.actorCoordinates() && tile.visible) {
-                        actors.getActorByCoordinates(Coordinates(col, row)).mapRepresentation
+                        actors.getActorByCoordinates(Coordinates(col, row))!!.mapRepresentation
                     } else if (tile.explored){
                         if (tile.name == "Floor Tile") {
                             tile.mapRepresentation[if (tile.visible) 1 else 0]
@@ -108,6 +113,20 @@ class ComposelikeSimulation {
         }
     }
 
+    /**
+     * Generates the desired number of Snakes. Each snake uses the HuntingEnemy Behavior, which
+     * runs an A* path to the player every turn. Barring further optimization, only a few dozen
+     * of these should exist at once (for now).
+     */
+    @RequiresApi(Build.VERSION_CODES.N)
+    private fun generateSnakes(numSnakes: Int) {
+        repeat (numSnakes) {
+            validSpawnCoordinates()?.let {
+                if (it.isNotEmpty()) actors.addActor(Actor.Snake(it.random()))
+            }
+        }
+    }
+
     // TODO: Some kind of error if the player is unable to spawn.
     private fun spawnPlayer() {
         validSpawnCoordinates()?.let {
@@ -115,12 +134,19 @@ class ComposelikeSimulation {
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.N)
     fun initSimulation() {
+        // Currently this is a placeholder test scenario:
         tilemap = Tilemap.Cave(40, 40)
+
+        generateSnakes(2)
         generateSmallGoblinPopulation()
+
         spawnPlayer()
-        tilemap?.setFieldOfView(actors.getPlayer(), this)
-        _camera.snapTo(actors.getPlayer().coordinates)
+        val player = actors.getPlayer()
+        tilemap?.setFieldOfView(player, this)
+        _camera.snapTo(player.coordinates)
+
         messageLog.addMessage("Welcome to Composelike!")
     }
 }

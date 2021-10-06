@@ -1,6 +1,11 @@
 package com.example.composelike
 
 sealed class MovementDirection(val dx: Int, val dy: Int) {
+    fun repr(): String {
+        return "MovementDirection(dx = $dx, dy = $dy)"
+    }
+
+    class Raw(dx: Int, dy: Int) : MovementDirection(dx, dy)
     class Up : MovementDirection(0, -1)
     class Down : MovementDirection(0, 1)
     class Left : MovementDirection(-1, 0)

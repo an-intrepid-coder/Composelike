@@ -1,5 +1,8 @@
 package com.example.composelike
 
+import android.os.Build
+import androidx.annotation.RequiresApi
+
 enum class ActorFaction {
     PLAYER,
     NEUTRAL,
@@ -95,7 +98,7 @@ sealed class Actor(
 
     class Player(coordinates: Coordinates) : Actor(
         coordinates = coordinates,
-        name = "@player",
+        name = "@Player",
         actorFaction = ActorFaction.PLAYER,
         inventory = listOf(
             Item.HealingPotion(),
@@ -106,10 +109,20 @@ sealed class Actor(
 
     class Goblin(coordinates: Coordinates) : Actor(
         coordinates = coordinates,
-        name = "goblin",
+        name = "Goblin",
         actorFaction = ActorFaction.ENEMY,
         maxHealth = 3,
-        maxMana = 1,
+        maxMana = 1, // TODO: Spells & Abilities
         behavior = Behavior.SimpleEnemy()
+    )
+
+    @RequiresApi(Build.VERSION_CODES.N)
+    class Snake(coordinates: Coordinates) : Actor(
+        coordinates = coordinates,
+        name = "Snake",
+        actorFaction = ActorFaction.ENEMY,
+        maxHealth = 5,
+        maxMana = 3, // TODO: Spells & Abilities
+        behavior = Behavior.HuntingEnemy()
     )
 }

@@ -1,10 +1,6 @@
 package com.example.composelike
 
-sealed class Tilemap(
-    initCols: Int,
-    initRows: Int,
-    initTileType: String? = null,
-) {
+sealed class Tilemap(initCols: Int, initRows: Int, initTileType: String? = null) {
     private val _dimensionCap = 40
     /*
         Dev Note: There is a limit to how big a Tilemap can be before it causes performance
@@ -27,7 +23,9 @@ sealed class Tilemap(
 
     fun setFieldOfView(actor: Actor, simulation: ComposelikeSimulation) {
         _tiles = mappedTiles { tile ->
-            if (actor.canSeeTile(tile, simulation)) tile.seen() else tile.unSeen()
+            if (simulation.debugMode) tile.seen()
+            else if (actor.canSeeTile(tile, simulation)) tile.seen()
+            else tile.unSeen()
         }
     }
 

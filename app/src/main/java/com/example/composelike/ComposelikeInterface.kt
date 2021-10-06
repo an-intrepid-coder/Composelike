@@ -49,6 +49,9 @@ fun ComposelikeTilemap(tilemapStrings: List<String>) {
     }
 }
 
+// TODO: Perhaps a Fog of War toggle for development purposes. Such a thing would be appropriate
+//  for a "Wizard Mode" down the road, as well.
+
 @Composable
 fun ComposelikeTouchControls(
     simulationViewModel: SimulationViewModel,
