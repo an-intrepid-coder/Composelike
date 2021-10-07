@@ -16,8 +16,8 @@ data class Coordinates(val x: Int, val y: Int) {
     }
 
     fun isNeighbor(other: Coordinates): Boolean {
-        return kotlin.math.abs(x - other.x) <= 1 &&
-               kotlin.math.abs(y - other.y) <= 1 &&
+        return abs(x - other.x) <= 1 &&
+               abs(y - other.y) <= 1 &&
                !(other.x == x && other.y == y)
     }
 
@@ -38,6 +38,10 @@ data class Coordinates(val x: Int, val y: Int) {
         /*
             Algorithm pseudocode courtesy of Wikipedia:
             https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm#All_cases
+
+            TODO: Can probably speed this up by using a Vector or something faster than a List
+                for line, and return it asList(). Might make a difference on larger maps and/or
+                with larger fields of view. Should not be an issue with current vision radius.
          */
         var line = listOf<Coordinates>()
         var plottingX = x

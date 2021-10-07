@@ -11,6 +11,8 @@ enum class ActorFaction {
 }
 
 sealed class Actor(
+    // TODO: Optimization: I can probably optimize this further. For example, by replacing
+    //  the inventory with a Vector.
     var coordinates: Coordinates,
     val name: String,
     val actorFaction: ActorFaction = ActorFaction.NEUTRAL,

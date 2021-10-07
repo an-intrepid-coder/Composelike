@@ -3,6 +3,10 @@ package com.example.composelike
 import android.os.Build
 import androidx.annotation.RequiresApi
 
+// TODO: Long-Term Optimization: I may be able to speed things up by using Vectors instead of
+//  Lists for many things; especially Tilemap generation. Depends on Kotlin List speed. Must
+//  do some research.
+
 class ComposelikeSimulation {
     private var _turnsPassed = 0
     private var _dungeonLevel = 1
@@ -34,6 +38,7 @@ class ComposelikeSimulation {
     // TODO: Long-Term: CharacterCell class, replacing the String-based approach.
 
     private fun exportDisplayStrings(origin: Coordinates, ends: Coordinates): List<String>? {
+        // TODO: I can probably optimize this more, and improve its style.
         if (tilemap == null) return null
         var newDisplayStrings = listOf<String>()
         for (row in origin.y until ends.y) {
@@ -96,9 +101,11 @@ class ComposelikeSimulation {
      * Returns a list of Coordinates at which an Actor could spawn (unoccupied walkable tiles).
      */
     private fun validSpawnCoordinates(): List<Coordinates>? {
-        return tilemap?.tiles()?.filter {
-            !actors.actorCoordinates().contains(it.coordinates) && it.walkable
-        }?.map { it.coordinates }
+        return tilemap?.tiles()
+            ?.asSequence()
+            ?.filter { !actors.actorCoordinates().contains(it.coordinates) && it.walkable }
+            ?.map { it.coordinates }
+            ?.toList()
     }
 
     /**
@@ -127,11 +134,13 @@ class ComposelikeSimulation {
         }
     }
 
-    // TODO: Some kind of error if the player is unable to spawn.
-    private fun spawnPlayer() {
+    private fun spawnPlayer(): Actor.Player? {
         validSpawnCoordinates()?.let {
-            if (it.isNotEmpty()) actors.addActor(Actor.Player(it.random()))
+            val player = Actor.Player(it.random())
+            if (it.isNotEmpty()) actors.addActor(player)
+            return player
         }
+        return null
     }
 
     @RequiresApi(Build.VERSION_CODES.N)
@@ -142,10 +151,11 @@ class ComposelikeSimulation {
         generateSnakes(2)
         generateSmallGoblinPopulation()
 
-        spawnPlayer()
-        val player = actors.getPlayer()
-        tilemap?.setFieldOfView(player, this)
-        _camera.snapTo(player.coordinates)
+        val player = spawnPlayer()
+        player?.let {
+            tilemap?.setFieldOfView(player, this)
+            _camera.snapTo(player.coordinates)
+        }
 
         messageLog.addMessage("Welcome to Composelike!")
     }

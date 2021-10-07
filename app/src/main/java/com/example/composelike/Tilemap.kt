@@ -9,6 +9,8 @@ sealed class Tilemap(initCols: Int, initRows: Int, initTileType: String? = null)
         This is only an issue for very large maps (greater than 100x100) but it would be nice
         to have an optimized solution down the road which can handle such maps. For now, 40x40
         is a very safe, practical, and performant cap.
+
+        TODO: Optimization: This class can probably be optimized a lot.
      */
     val cols = if (initCols > _dimensionCap) _dimensionCap else initCols
     val rows = if (initRows > _dimensionCap) _dimensionCap else initRows
@@ -67,10 +69,8 @@ sealed class Tilemap(initCols: Int, initRows: Int, initTileType: String? = null)
      */
     private fun mappedTiles(mapFunction: (Tile) -> Tile): List<List<Tile>> {
         /*
-            Optimization Note: Map generation relies on calling this many times over. Since it
-            is an up-front cost to loading a map it's not a huge deal, but there is a lot of
-            room to do it better. This is a placeholder solution for sure since map generation
-            will get much more complicated.
+            TODO: Optimization: This function is the backbone of the map generation process and
+                also runs every turn to set the Field of View. It can probably be heavily optimized.
          */
         var newTilemap: List<List<Tile>> = listOf()
         repeat (rows) { row ->

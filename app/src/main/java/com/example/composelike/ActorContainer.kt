@@ -3,6 +3,7 @@ package com.example.composelike
 import kotlin.system.exitProcess
 
 class ActorContainer {
+    // TODO: Optimization: This class can probably be optimized a lot.
     private var _actors = listOf<Actor>()
     fun actors() = _actors
 
@@ -53,7 +54,7 @@ class ActorContainer {
      * Will fight an Actor of a different faction if one is at the intended destination.
      */
     fun moveActor(
-        // TODO: This can be optimized.
+        // TODO: This can be optimized and the style improved more.
         actor: Actor,
         movementDirection: MovementDirection,
         simulation: ComposelikeSimulation,
@@ -87,7 +88,7 @@ class ActorContainer {
 
     fun updateActorBehavior(simulation: ComposelikeSimulation) {
         for (actor in _actors) {
-            if (actor.behavior != null) {
+            actor.behavior?.run {
                 actor.behavior!!.effect(actor, simulation)
             }
         }

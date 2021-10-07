@@ -10,6 +10,7 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
 
 @Composable
@@ -58,69 +59,123 @@ fun ComposelikeTouchControls(
     navController: NavController
 ) {
     Row {
-        Text("[MAP]", Modifier.clickable {
-            navController.navigate("mapScreen")
-        })
+        Text(
+            text = "[MAP]",
+            modifier = Modifier.clickable { navController.navigate("mapScreen") },
+            fontSize = 17.sp
+        )
         Spacer(Modifier.width(8.dp))
-        Text("[LOG]", Modifier.clickable {
-            navController.navigate("messageLog")
-        })
+        Text(
+            text = "[LOG]",
+            modifier = Modifier.clickable { navController.navigate("messageLog") },
+            fontSize = 17.sp
+        )
         Spacer(Modifier.width(8.dp))
-        Text("[Y]", Modifier.clickable {
-            simulationViewModel.advanceSimByMove(MovementDirection.UpLeft())
-        })
+        Text(
+            text = "[Y]",
+            modifier = Modifier.clickable {
+                simulationViewModel.advanceSimByMove(MovementDirection.UpLeft())
+            },
+            fontSize = 17.sp
+        )
         Spacer(Modifier.width(8.dp))
-        Text("[K]", Modifier.clickable {
-            simulationViewModel.advanceSimByMove(MovementDirection.Up())
-        })
+        Text(
+            text = "[K]",
+            modifier = Modifier.clickable {
+                simulationViewModel.advanceSimByMove(MovementDirection.Up())
+            },
+            fontSize = 17.sp
+        )
         Spacer(Modifier.width(8.dp))
-        Text("[U]", Modifier.clickable {
-            simulationViewModel.advanceSimByMove(MovementDirection.UpRight())
-        })
+        Text(
+            text = "[U]",
+            modifier = Modifier.clickable {
+                simulationViewModel.advanceSimByMove(MovementDirection.UpRight())
+            },
+            fontSize = 17.sp
+        )
         Spacer(Modifier.width(8.dp))
-        Text("[INV]", Modifier.clickable {
-            navController.navigate("inventoryScreen")
-        })
+        Text(
+            text = "[INV]",
+            modifier = Modifier.clickable { navController.navigate("inventoryScreen") },
+            fontSize = 17.sp
+        )
         Spacer(Modifier.width(8.dp))
-        Text("[CHR]", Modifier.clickable {
-            // TODO: Character Sheet & Misc. Player Stats
-        })
+        Text(
+            text = "[CHR]",
+            modifier = Modifier.clickable { }, // TODO
+            fontSize = 17.sp
+        )
+    }
+    // TODO: Polish the rest of these Text()s. Factor out into a re-usable button or something.
+    // TODO: Custom Font styles in more depth. Perhaps some real buttons.
+    Spacer(Modifier.height(8.dp))
+    Row {
+        Text(
+            text = "[<]",
+            modifier = Modifier.clickable {
+                // TODO: Stairs up.
+            },
+            fontSize = 17.sp
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = "[H]",
+            modifier = Modifier.clickable {
+                simulationViewModel.advanceSimByMove(MovementDirection.Left())
+            },
+            fontSize = 17.sp
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = "[.]",
+            modifier = Modifier.clickable {
+                simulationViewModel.advanceSimByMove(MovementDirection.Stationary())
+            },
+            fontSize = 17.sp
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = "[L]",
+            modifier = Modifier.clickable {
+                simulationViewModel.advanceSimByMove(MovementDirection.Right())
+            },
+            fontSize = 17.sp
+        )
+        Spacer(Modifier.width(8.dp))
+        Text(
+            text = "[>]",
+            modifier = Modifier.clickable {
+                // TODO: Stairs down.
+            },
+            fontSize = 17.sp
+        )
     }
     Spacer(Modifier.height(8.dp))
     Row {
-        Text("[<]", Modifier.clickable {
-            // TODO: Stairs up.
-        })
+        Text(
+            text = "[B]",
+            modifier = Modifier.clickable {
+                simulationViewModel.advanceSimByMove(MovementDirection.DownLeft())
+            },
+            fontSize = 17.sp
+        )
         Spacer(Modifier.width(8.dp))
-        Text("[H]", Modifier.clickable {
-            simulationViewModel.advanceSimByMove(MovementDirection.Left())
-        })
+        Text(
+            text = "[J]",
+            modifier = Modifier.clickable {
+                simulationViewModel.advanceSimByMove(MovementDirection.Down())
+            },
+            fontSize = 17.sp
+        )
         Spacer(Modifier.width(8.dp))
-        Text("[.]", Modifier.clickable {
-            simulationViewModel.advanceSimByMove(MovementDirection.Stationary())
-        })
-        Spacer(Modifier.width(8.dp))
-        Text("[L]", Modifier.clickable {
-            simulationViewModel.advanceSimByMove(MovementDirection.Right())
-        })
-        Spacer(Modifier.width(8.dp))
-        Text("[>]", Modifier.clickable {
-            // TODO: Stairs down.
-        })
-    }
-    Spacer(Modifier.height(8.dp))
-    Row {
-        Text("[B]", Modifier.clickable {
-            simulationViewModel.advanceSimByMove(MovementDirection.DownLeft())
-        })
-        Spacer(Modifier.width(8.dp))
-        Text("[J]", Modifier.clickable {
-            simulationViewModel.advanceSimByMove(MovementDirection.Down())
-        })
-        Spacer(Modifier.width(8.dp))
-        Text("[N]", Modifier.clickable {
-            simulationViewModel.advanceSimByMove(MovementDirection.DownRight())
-        })
+        Text(
+            text = "[N]",
+            modifier = Modifier.clickable {
+                simulationViewModel.advanceSimByMove(MovementDirection.DownRight())
+            },
+            fontSize = 17.sp
+        )
     }
     Spacer(Modifier.height(8.dp))
 }
