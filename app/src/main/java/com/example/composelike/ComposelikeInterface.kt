@@ -16,24 +16,24 @@ import androidx.navigation.NavController
 @Composable
 fun ComposelikeHud(hudStrings: Map<String, String>) {
     Row {
-        Text(hudStrings.getOrElse("hp") { "0" })
+        Text(hudStrings.getOrElse("hp") { "display error!" })
         Spacer(Modifier.width(28.dp))
-        Text(hudStrings.getOrElse("mp") { "0" })
+        Text(hudStrings.getOrElse("mp") { "display error!" })
         Spacer(Modifier.width(28.dp))
-        Text(hudStrings.getOrElse("turnsPassed") { "0" })
+        Text(hudStrings.getOrElse("turnsPassed") { "display error!" })
     }
     Row {
-        Text(hudStrings.getOrElse("bonusAttack") { "0" })
+        Text(hudStrings.getOrElse("bonusAttack") { "display error!" })
         Spacer(Modifier.width(28.dp))
-        Text(hudStrings.getOrElse("bonusDefense") { "0" })
+        Text(hudStrings.getOrElse("bonusDefense") { "display error!" })
         Spacer(Modifier.width(28.dp))
-        Text(hudStrings.getOrElse("playerLevel") { "0" })
+        Text(hudStrings.getOrElse("playerLevel") { "display error!" })
     }
-    Text(hudStrings.getOrElse("experienceToLevel") { "0" }) // TODO: XP Bar!
+    Text(hudStrings.getOrElse("experienceToLevel") { "display error!" })
     Row {
-        Text(hudStrings.getOrElse("dungeonLevel") { "0" })
+        Text(hudStrings.getOrElse("dungeonLevel") { "display error!" })
         Spacer(Modifier.width(28.dp))
-        Text(hudStrings.getOrElse("gold") { "0" })
+        Text(hudStrings.getOrElse("gold") { "display error!" })
     }
     Spacer(Modifier.height(8.dp))
 }

@@ -22,7 +22,7 @@ sealed class Actor(
     var visionDistance: Int = 8,
     var gold: Int = 0,
     var level: Int = 1,
-    var experienceToLevel: Int = 1000,
+    var experienceToLevel: Int = 990, //1000,
     var inventory: List<Item> = listOf(),
     var behavior: Behavior? = null,
 ) {

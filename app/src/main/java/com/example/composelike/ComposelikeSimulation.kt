@@ -21,6 +21,26 @@ class ComposelikeSimulation {
     // TODO: A HudStrings class.
     fun exportHudStrings(): Map<String, String> {
         val player = actors.getPlayer()
+
+        fun xpProgressBar(): String {
+            // TODO: This is a candidate for a more generic function at some point.
+            val xpBar = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~".toMutableList()
+            // This assumes it is always 1000xp between levels. Which it is. For now.
+            val xpPercentage = (1000 - player.experienceToLevel) / 1000.0 * 100.0
+            xpBar.forEachIndexed { index, char ->
+                val indexPercentage = index / xpBar.size.toDouble() * 100.0
+                xpBar[index] = if (indexPercentage < xpPercentage)
+                    char
+                else if (indexPercentage >= xpPercentage && index > 0 && xpBar[index - 1] == '~')
+                    '>'
+                else
+                    '_'
+            }
+            return xpBar
+                .toString()
+                .filter { it == '~' || it == '>' || it == '_'}
+        }
+
         return mapOf(
             "hp" to "HP: " + player.health.toString() + "/" + player.maxHealth.toString(),
             "mp" to "MP: " + player.mana.toString() + "/" + player.maxMana.toString(),
@@ -28,8 +48,7 @@ class ComposelikeSimulation {
             "bonusDefense" to "DEF: " + player.bonusDefense.toString(),
             "gold" to "Gold: " + player.gold.toString(),
             "playerLevel" to "PLVL: " + player.level.toString(),
-            // TODO: XP Bar!
-            "experienceToLevel" to "XP-TO-GO: " + player.experienceToLevel.toString(),
+            "experienceToLevel" to "XP: " + xpProgressBar(),
             "dungeonLevel" to "DLVL: $_dungeonLevel",
             "turnsPassed" to "Turns: $_turnsPassed",
         )

@@ -45,13 +45,7 @@ sealed class Tilemap(
         return (row == 0 || col == 0 || row == rows - 1 || col == cols - 1)
     }
 
-    private fun randomWalkableTile(): Tile {
-        /*
-            Debug Note: Currently crashing in here as a result of errors in classic rogue map.
-                easy fix. Will debug when I get home.
-         */
-        return tiles().filter { it.walkable }.random()
-    }
+    private fun randomWalkableTile(): Tile { return tiles().filter { it.walkable }.random() }
 
     /**
      * If initTileType is "wall" or "floor" then it will init the whole Tilemap to that tile type.
