@@ -3,11 +3,12 @@ package com.example.composelike
 import android.os.Build
 import androidx.annotation.RequiresApi
 
-// TODO: Long-Term Optimization: I may be able to speed things up by using Vectors instead of
-//  Lists for many things; especially Tilemap generation. Depends on Kotlin List speed. Must
-//  do some research.
-
 class ComposelikeSimulation {
+    // TODO: Refactoring: Long-Term: This has become something of a catch-all class and is verging
+    //  on being an anti-pattern. It makes sense as a catch-all class, but there's probably
+    //  a better way to organize it; for example, by attaching a reference to the simulation
+    //  to the classes which must interact with it rather than just passing the reference
+    //  around all the time.
     private var _turnsPassed = 0
     private var _dungeonLevel = 1
     private val _camera = Camera()
@@ -38,7 +39,8 @@ class ComposelikeSimulation {
     // TODO: Long-Term: CharacterCell class, replacing the String-based approach.
 
     private fun exportDisplayStrings(origin: Coordinates, ends: Coordinates): List<String>? {
-        // TODO: I can probably optimize this more, and improve its style.
+        // TODO: I can probably optimize this more, and improve its style. That will need to
+        //  happen soon-ish.
         if (tilemap == null) return null
         var newDisplayStrings = listOf<String>()
         for (row in origin.y until ends.y) {
@@ -49,7 +51,14 @@ class ComposelikeSimulation {
                     if (Coordinates(col, row) in actors.actorCoordinates() && tile.visible) {
                         actors.getActorByCoordinates(Coordinates(col, row))!!.mapRepresentation
                     } else if (tile.explored){
-                        if (tile.name == "Floor Tile") {
+                        /*
+                            Since each Tile type has a potentially different series of characters
+                            in their map representation, this logic could get complicated even
+                            as it allows for a lot of cool stuff such as Tiles which animate.
+
+                            TODO: Look in to a more extensible solution.
+                         */
+                        if (tile.name == "Floor Tile" || tile.name == "Room Tile") {
                             tile.mapRepresentation[if (tile.visible) 1 else 0]
                         } else {
                             tile.mapRepresentation
@@ -89,7 +98,7 @@ class ComposelikeSimulation {
     fun nextTurnByPlayerMove(movementDirection: MovementDirection) {
         // For now, Player will always go first. For now.
         actors.moveActor(actors.getPlayer(), movementDirection, this)
-        tilemap?.setFieldOfView(actors.getPlayer(), this)
+        tilemap?.setFieldOfView(actors.getPlayer())
         actors.updateActorBehavior(this)
         _turnsPassed++
         if (_camera.coupled()) { _camera.snapTo(actors.getPlayer().coordinates) }
@@ -123,7 +132,8 @@ class ComposelikeSimulation {
     /**
      * Generates the desired number of Snakes. Each snake uses the HuntingEnemy Behavior, which
      * runs an A* path to the player every turn. Barring further optimization, only a few dozen
-     * of these should exist at once (for now).
+     * of these should exist at once. Current optimization level can handle about 50 without
+     * causing much lag.
      */
     @RequiresApi(Build.VERSION_CODES.N)
     private fun generateSnakes(numSnakes: Int) {
@@ -146,14 +156,14 @@ class ComposelikeSimulation {
     @RequiresApi(Build.VERSION_CODES.N)
     fun initSimulation() {
         // Currently this is a placeholder test scenario:
-        tilemap = Tilemap.Cave(40, 40)
+        tilemap = Tilemap.ClassicDungeon(40, 40, this)
 
         generateSnakes(2)
         generateSmallGoblinPopulation()
 
         val player = spawnPlayer()
         player?.let {
-            tilemap?.setFieldOfView(player, this)
+            tilemap?.setFieldOfView(player)
             _camera.snapTo(player.coordinates)
         }
 

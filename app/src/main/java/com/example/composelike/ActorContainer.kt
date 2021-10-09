@@ -88,9 +88,7 @@ class ActorContainer {
 
     fun updateActorBehavior(simulation: ComposelikeSimulation) {
         for (actor in _actors) {
-            actor.behavior?.run {
-                actor.behavior!!.effect(actor, simulation)
-            }
+            actor.behavior?.run { this.effect(actor, simulation) }
         }
     }
 

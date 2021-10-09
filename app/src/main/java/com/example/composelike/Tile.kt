@@ -8,6 +8,7 @@ sealed class Tile(
     var explored: Boolean = false,
     var visible: Boolean = false,
     val blocksSightLine: Boolean = false,
+    val roomNumber: Int? = null
     ) {
     // TODO: Perhaps a variable to track the player's "trail", for some hunting monsters to follow.
 
@@ -38,6 +39,27 @@ sealed class Tile(
         name = "Floor Tile",
         coordinates = coordinates,
         mapRepresentation = " ."
+    )
+
+    /**
+     * Room Tiles are marked with their roomNumber in order to make it easier to treat them
+     * as groups during map generation and (eventually) during event triggers.
+     */
+    class Room(coordinates: Coordinates, roomNumber: Int) : Tile(
+        name = "Room Tile",
+        coordinates = coordinates,
+        mapRepresentation = " .",
+        roomNumber = roomNumber
+    )
+
+    class Door(coordinates: Coordinates) : Tile(
+        name = "Door Tile",
+        coordinates = coordinates,
+        mapRepresentation = "+." // <-- Not positive this will be ideal yet.
+        // TODO: Questions on how to make this interact with FOV in the best way. Probably
+        //  having OpenDoor and ClosedDoor and making them switch with an opened() / closed() pair
+        //  of functions, similar to seen() and unSeen().
+        // TODO: Locked doors and Event Triggers.
     )
 
     class StairsUp(coordinates: Coordinates) : Tile(

@@ -1,6 +1,14 @@
 package com.example.composelike
 
-sealed class Tilemap(initCols: Int, initRows: Int, initTileType: String? = null) {
+import android.os.Build
+import androidx.annotation.RequiresApi
+
+sealed class Tilemap(
+    initCols: Int,
+    initRows: Int,
+    private val _parentSimulation: ComposelikeSimulation,
+    initTileType: String? = null
+) {
     private val _dimensionCap = 40
     /*
         Dev Note: There is a limit to how big a Tilemap can be before it causes performance
@@ -23,10 +31,10 @@ sealed class Tilemap(initCols: Int, initRows: Int, initTileType: String? = null)
         return _tiles.getOrNull(coordinates.y)?.getOrNull(coordinates.x)
     }
 
-    fun setFieldOfView(actor: Actor, simulation: ComposelikeSimulation) {
+    fun setFieldOfView(actor: Actor) {
         _tiles = mappedTiles { tile ->
-            if (simulation.debugMode) tile.seen()
-            else if (actor.canSeeTile(tile, simulation)) tile.seen()
+            if (_parentSimulation.debugMode) tile.seen()
+            else if (actor.canSeeTile(tile, _parentSimulation)) tile.seen()
             else tile.unSeen()
         }
     }
@@ -38,6 +46,10 @@ sealed class Tilemap(initCols: Int, initRows: Int, initTileType: String? = null)
     }
 
     private fun randomWalkableTile(): Tile {
+        /*
+            Debug Note: Currently crashing in here as a result of errors in classic rogue map.
+                easy fix. Will debug when I get home.
+         */
         return tiles().filter { it.walkable }.random()
     }
 
@@ -105,7 +117,11 @@ sealed class Tilemap(initCols: Int, initRows: Int, initTileType: String? = null)
     /**
      * A blank map with walls around the edges.
      */
-    class Testing(cols: Int, rows: Int) : Tilemap(cols, rows, "floor") {
+    class Testing(
+        cols: Int,
+        rows: Int,
+        parentSimulation: ComposelikeSimulation
+    ) : Tilemap(cols, rows, parentSimulation, "floor") {
         init { withEdgeWalls() }
     }
 
@@ -126,10 +142,21 @@ sealed class Tilemap(initCols: Int, initRows: Int, initTileType: String? = null)
         }
     }
 
+    /*
+        TODO: Conway's Game of Life map! It could run applyCellularAutomata for an arbitrary
+            number of setup generations and then yield the resulting Tilemap. Using an event trigger
+            system or something I could even cause it to advance generations in game! That's a
+            neat idea!
+     */
+
     /**
      * A cave-like map made with a Cellular Automata.
      */
-    class Cave(cols: Int, rows: Int) : Tilemap(cols, rows) {
+    class Cave(
+        cols: Int,
+        rows: Int,
+        parentSimulation: ComposelikeSimulation
+    ) : Tilemap(cols, rows, parentSimulation) {
         init {
             applyCellularAutomata(
                 /*
@@ -145,6 +172,7 @@ sealed class Tilemap(initCols: Int, initRows: Int, initTileType: String? = null)
                 decisionFunction = { tile ->
                     val neighborThreshold = 4
                     tile.getNeighbors(tiles())
+                        // TODO: Test that this wouldn't be better as a Sequence.
                         .filter { it.walkable }
                         .size >= neighborThreshold
                 }
@@ -155,5 +183,160 @@ sealed class Tilemap(initCols: Int, initRows: Int, initTileType: String? = null)
         }
     }
 
-    //class ClassicDungeon // TODO
+    fun insertTiles(tiles: List<Tile>) {
+        _tiles = mappedTiles { tile ->
+            if (tile.coordinates in tiles.map { it.coordinates })
+                tiles.first { it.coordinates == tile.coordinates }
+            else tile
+        }
+    }
+
+    /**
+     * This function assumes that the Tilemap has been initialized to all or mostly Wall tiles.
+     * It will default to "stamping" rooms in a grid-like manner for now, but eventually it will
+     * do more interesting things.
+     */
+    fun withStampedRooms(): List<Coordinates> {
+        val roomSizeRange = 4..6
+        val roomSpacing = 3..9
+
+        val nodesList = mutableListOf<Coordinates>()
+        var roomsStamped = 0
+        var currentRoomTopLeft = Coordinates(1, 1)
+        var currentRoomWidth = roomSizeRange.random()
+        var currentRoomHeight = roomSizeRange.random()
+
+        val roomTiles = mutableListOf<Tile>()
+
+        while (currentRoomTopLeft.y + roomSizeRange.last + 1 < rows - 1) {
+
+            repeat (currentRoomHeight) { row ->
+                repeat (currentRoomWidth) { col ->
+                    roomTiles.add(
+                        Tile.Room(
+                            Coordinates(
+                                x = currentRoomTopLeft.x + col,
+                                y = currentRoomTopLeft.y + row
+                            ),
+                            roomsStamped
+                        )
+                    )
+                }
+            }
+
+            nodesList.add(
+                Coordinates(
+                    x = currentRoomTopLeft.x + currentRoomWidth / 2,
+                    y = currentRoomTopLeft.y + currentRoomHeight / 2
+                )
+            )
+
+            roomsStamped++
+            val newRoomWidth = roomSizeRange.random()
+            val newRoomHeight = roomSizeRange.random()
+            val spacing = roomSpacing.random()
+            var nextTopLeft = Coordinates(
+                x = if (currentRoomTopLeft.x + currentRoomWidth + spacing + newRoomWidth < cols - 1)
+                    currentRoomTopLeft.x + currentRoomWidth + spacing
+                    else 1,
+                y = currentRoomTopLeft.y
+            )
+
+            if (nextTopLeft.x < currentRoomTopLeft.x) {
+                nextTopLeft = Coordinates(
+                    x = nextTopLeft.x,
+                    y = nextTopLeft.y + roomSizeRange.last + 1
+                )
+            }
+
+            currentRoomTopLeft = nextTopLeft
+            currentRoomHeight = newRoomHeight
+            currentRoomWidth = newRoomWidth
+        }
+
+        insertTiles(roomTiles)
+
+        return nodesList
+    }
+
+    /**
+     * Runs a series of A* paths between the nodes in the nodesList and carves out hallways.
+     * Will not override Room Tiles. Will use waypoints and as-yet-undetermined fuzziness and
+     * logic in order to connect the nodes in a neat way. <-- TODO
+     */
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun withConnectedRooms(nodesList: List<Coordinates>) {
+        // TODO: Waypoints!
+        val shuffledNodes = nodesList.shuffled() as MutableList<Coordinates>
+
+        val hallTiles = mutableListOf<Tile>()
+
+        var previous = shuffledNodes.removeFirst()
+
+        while (shuffledNodes.isNotEmpty()) {
+            shuffledNodes.removeFirstOrNull()?.let {
+                it.shortestPathTo(
+                    goal = previous,
+                    xBound = cols,
+                    yBound = rows,
+                    simulation = _parentSimulation,
+                    heuristicFunction = { node, actor, simulation ->
+                        node.euclideanDistance(previous)
+                    }
+                )?.let { path ->
+                    for (coordinates in path) {
+                        getTileOrNull(coordinates)?.let { tile ->
+                            if (tile.name == "Wall Tile") hallTiles.add(Tile.Floor(coordinates))
+                        }
+                    }
+                }
+                previous = it
+            }
+        }
+        insertTiles(hallTiles)
+    }
+
+    /**
+     * Will be a simple "rectangular rooms and twisty hallways" dungeon, with elements reminiscent
+     * of traditional Roguelikes.
+     */
+    @RequiresApi(Build.VERSION_CODES.N)
+    class ClassicDungeon(
+        cols: Int,
+        rows: Int,
+        parentSimulation: ComposelikeSimulation
+    ) : Tilemap(cols, rows, parentSimulation, "wall") {
+        /*
+            pcode:
+                1. Place rooms by row in grid-like arrangement, perhaps using a re-usable
+                    room-stamping function (as this is far from the only map type which will
+                    use it).
+                    1a. At the center (roughly) of each Room, place a node in a nodesList of
+                        some kind.
+
+                2. Connect all the nodes in the nodesList. It could be randomly, it could be
+                    according to some logic, and waypoints can be injected in to an A* path to
+                    create sensible hallways that still curve in a natural way.
+
+            Extras:
+                1. It would be a good time to implement a Door tile.
+                2. It would be a good time to implement Event Triggers.
+                3. The combination of 1 + 2 means that I could cause rooms to "light up" in the
+                    way of the traditional Rogue while maintaining a modern FOV style in general.
+                4. Secret doors, secret hallways, and some rooms replaced with "Mazes" -- all
+                    features of the original Rogue that would be missing from an homage map.
+                5. It would be a good time to look in to a BSP implementation.
+
+            Status: Rough draft complete. Most of the Extras remain to be tackled, but all
+                look feasible at this point. Excellent stuff!
+         */
+        init {
+            withConnectedRooms(withStampedRooms())
+            // TODO: Refinement: ^ These two functions are in the early stages and should become
+            //  much more complex and interesting soon.
+
+            withEdgeWalls()
+            withRandomStairsDown()
+        }
+    }
 }

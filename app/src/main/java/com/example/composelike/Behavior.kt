@@ -45,15 +45,17 @@ sealed class Behavior(
 
             val pathToPlayer = actor.coordinates.shortestPathTo(
                 goal = playerLocation,
+                xBound = simulation.tilemap!!.cols,
+                yBound = simulation.tilemap!!.rows,
                 actor = actor,
                 simulation = simulation,
                 heuristicFunction = { node, actor, simulation ->
                     val scoreDefault = Int.MAX_VALUE / 2
-                    val targetTile = simulation.tilemap?.getTileOrNull(node)
+                    val targetTile = simulation?.tilemap?.getTileOrNull(node)
                     val walkable = targetTile?.walkable
                     val occupiedByFriendly = targetTile?.let {
                         simulation.actors.getActorByCoordinates(targetTile.coordinates)?.let {
-                            it.actorFaction == actor.actorFaction
+                            it.actorFaction == actor?.actorFaction
                         }
                     }
 

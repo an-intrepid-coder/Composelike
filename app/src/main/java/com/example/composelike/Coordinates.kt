@@ -38,10 +38,6 @@ data class Coordinates(val x: Int, val y: Int) {
         /*
             Algorithm pseudocode courtesy of Wikipedia:
             https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm#All_cases
-
-            TODO: Can probably speed this up by using a Vector or something faster than a List
-                for line, and return it asList(). Might make a difference on larger maps and/or
-                with larger fields of view. Should not be an issue with current vision radius.
          */
         var line = listOf<Coordinates>()
         var plottingX = x
@@ -71,24 +67,32 @@ data class Coordinates(val x: Int, val y: Int) {
      * Returns all neighbor coordinates that exist within the simulation (no out of bounds
      * coordinates).
      */
-    private fun neighbors(simulation: ComposelikeSimulation): List<Coordinates> {
-        return simulation.tilemap!!.tiles()
+    private fun neighbors(xBound: Int, yBound: Int): List<Coordinates> {
+        return allMovementDirections
             .asSequence()
-            .map { it.coordinates }
-            .filter { it.isNeighbor(this) }
+            .filter { it.name != "Stationary" }
+            .map { Coordinates(this.x + it.dx, this.y + it.dy) }
+            .filter { it.x >= 0 && this.x < xBound && it.y >= 0 && it.y < yBound }
             .toList()
     }
 
     /**
      * Finds the shortest path from one set of Coordinates to another using the A* search algorithm.
+     *
+     * TODO: It's going to get a little funky using this for map generation and also for
+     *  pathfinding. I'll need to make the parameters more complicated or else split this into
+     *  multiple functions with different sets of parameters, eventually.
      */
     // Requires API Level 24.
     @RequiresApi(Build.VERSION_CODES.N)
     fun shortestPathTo(
         goal: Coordinates,
-        actor: Actor,
-        simulation: ComposelikeSimulation,
-        heuristicFunction: (Coordinates, Actor, ComposelikeSimulation) -> Int,
+        xBound: Int,
+        yBound: Int,
+        actor: Actor? = null,
+        simulation: ComposelikeSimulation? = null,
+        heuristicFunction: (Coordinates, Actor?, ComposelikeSimulation?) -> Int =
+            { node, actor, simulation -> node.chebyshevDistance(goal) }
     ): List<Coordinates>? {
         /*
             Algorithm pseudocode courtesy of Wikipedia:
@@ -108,15 +112,13 @@ data class Coordinates(val x: Int, val y: Int) {
             cameFrom: Map<Coordinates, Coordinates>,
             current: Coordinates
         ): List<Coordinates> {
-            val totalPath = Vector<Coordinates>(cameFrom.size)
-            totalPath.add(current)
+            val totalPath = mutableListOf(current)
             var temp = current
             while (temp in cameFrom.keys) {
                 temp = cameFrom[temp]!!
                 totalPath.add(temp)
             }
             return totalPath.reversed()
-            // TODO: Optimization: ^ I may still be able to improve upon this.
         }
 
         val cameFrom = mutableMapOf<Coordinates, Coordinates>()
@@ -143,7 +145,7 @@ data class Coordinates(val x: Int, val y: Int) {
 
             val gScoreCurrent = gScore.getOrElse(current) { scoreDefault }
 
-            for (node in current.neighbors(simulation)) {
+            for (node in current.neighbors(xBound, yBound)) {
                 val gScoreNode = gScore.getOrElse(node) { scoreDefault }
                 val tentativeGScore = gScoreCurrent + current.chebyshevDistance(node)
                 if (tentativeGScore < gScoreNode) {
