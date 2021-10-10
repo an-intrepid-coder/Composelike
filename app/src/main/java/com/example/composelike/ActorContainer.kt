@@ -19,7 +19,9 @@ class ActorContainer {
 
     fun getPlayer(): Actor {
         val player = _actors.firstOrNull { it.actorFaction == ActorFaction.PLAYER }
-        if (player == null) exitProcess(0) // TODO: Real game over function.
+        if (player == null) exitProcess(0)
+        // TODO: On player defeat, save a high score to persistent storage and present the
+        //  player with game statistics and the option for a new game.
         else return player
     }
 

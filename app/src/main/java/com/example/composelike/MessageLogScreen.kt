@@ -11,6 +11,8 @@ import androidx.compose.runtime.livedata.observeAsState
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.example.composelike.ui.theme.DoublePlusGreen
+import com.example.composelike.ui.theme.ElectricTeal
 
 @Composable
 fun MessageLogScreen(simulationViewModel: SimulationViewModel) {
@@ -19,18 +21,19 @@ fun MessageLogScreen(simulationViewModel: SimulationViewModel) {
 
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        reverseLayout = true,
     ) {
-        item {
-            Text("MESSAGE LOG")
-            Text("-~-~-~-~-~-")
-            Spacer(Modifier.height(8.dp))
-        }
         for (msg in messageLogStrings!!.reversed()) {
             item {
                 Text(msg)
                 Spacer(Modifier.height(8.dp))
             }
+        }
+        item {
+            Text(color = ElectricTeal, text = "-~-~-~-~-~-")
+            Text(color = DoublePlusGreen, text = "MESSAGE LOG")
+            Spacer(Modifier.height(8.dp))
         }
     }
 }

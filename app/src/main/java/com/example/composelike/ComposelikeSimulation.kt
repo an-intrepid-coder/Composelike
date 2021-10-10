@@ -9,6 +9,10 @@ class ComposelikeSimulation {
     //  a better way to organize it; for example, by attaching a reference to the simulation
     //  to the classes which must interact with it rather than just passing the reference
     //  around all the time.
+    // TODO: Optimization: Long-Term: There's more research to do regarding concurrency and
+    //  best practices. I may be able to take advantage of concurrency for more things in a
+    //  better way.
+    // TODO: Save & Exit functionality.
     private var _turnsPassed = 0
     private var _dungeonLevel = 1
     private val _camera = Camera()
@@ -16,7 +20,7 @@ class ComposelikeSimulation {
     val actors = ActorContainer()
     val messageLog = MessageLog()
 
-    val debugMode = false //true
+    val debugMode = true
 
     // TODO: A HudStrings class.
     fun exportHudStrings(): Map<String, String> {
@@ -95,23 +99,27 @@ class ComposelikeSimulation {
     }
 
     fun exportTilemapStrings(tilemapDisplayCols: Int, tilemapDisplayRows: Int): List<String>? {
-        if (tilemap == null) return null
-        val origin = Coordinates(
-            _camera.coordinates().x - tilemapDisplayCols / 2,
-            _camera.coordinates().y - tilemapDisplayRows / 2
-        )
-        val ends = Coordinates(
-            origin.x + tilemapDisplayCols,
-            origin.y + tilemapDisplayRows
-        )
-        return exportDisplayStrings(origin, ends)
+        tilemap?.let {
+            val origin = Coordinates(
+                _camera.coordinates().x - tilemapDisplayCols / 2,
+                _camera.coordinates().y - tilemapDisplayRows / 2
+            )
+            val ends = Coordinates(
+                origin.x + tilemapDisplayCols,
+                origin.y + tilemapDisplayRows
+            )
+            return exportDisplayStrings(origin, ends)
+        }
+        return null
     }
 
     fun exportMapScreenStrings(): List<String>? {
-        if (tilemap == null) return null
-        val origin = Coordinates(0, 0)
-        val ends = Coordinates(tilemap!!.cols, tilemap!!.rows)
-        return exportDisplayStrings(origin, ends)
+        tilemap?.let {
+            val origin = Coordinates(0, 0)
+            val ends = Coordinates(tilemap!!.cols, tilemap!!.rows)
+            return exportDisplayStrings(origin, ends)
+        }
+        return null
     }
 
     fun nextTurnByPlayerMove(movementDirection: MovementDirection) {
@@ -177,11 +185,10 @@ class ComposelikeSimulation {
         // Currently this is a placeholder test scenario:
         tilemap = Tilemap.ClassicDungeon(40, 40, this)
 
-        generateSnakes(2)
-        generateSmallGoblinPopulation()
+        //generateSnakes(2)
+        //generateSmallGoblinPopulation()
 
-        val player = spawnPlayer()
-        player?.let {
+        spawnPlayer()?.let { player ->
             tilemap?.setFieldOfView(player)
             _camera.snapTo(player.coordinates)
         }

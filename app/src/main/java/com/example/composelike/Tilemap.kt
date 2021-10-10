@@ -76,7 +76,8 @@ sealed class Tilemap(
     private fun mappedTiles(mapFunction: (Tile) -> Tile): List<List<Tile>> {
         /*
             TODO: Optimization: This function is the backbone of the map generation process and
-                also runs every turn to set the Field of View. It can probably be heavily optimized.
+                also runs every turn to set the Field of View. It can probably be heavily optimized
+                using Sequences. <--- Next up, I think.
          */
         var newTilemap: List<List<Tile>> = listOf()
         repeat (rows) { row ->
@@ -177,7 +178,7 @@ sealed class Tilemap(
         }
     }
 
-    fun insertTiles(tiles: List<Tile>) {
+    private fun insertTiles(tiles: List<Tile>) {
         _tiles = mappedTiles { tile ->
             if (tile.coordinates in tiles.map { it.coordinates })
                 tiles.first { it.coordinates == tile.coordinates }

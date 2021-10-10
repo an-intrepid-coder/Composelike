@@ -1,5 +1,7 @@
 package com.example.composelike
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.core.*
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
@@ -12,8 +14,10 @@ import androidx.navigation.NavController
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 
-// TODO: Loading animations! Procedural!
+// TODO: Loading animations! Procedural! Cellular Automata and stuff. Could make a whole new
+//  side project out of that actually.
 
+@RequiresApi(Build.VERSION_CODES.N)
 @Composable
 fun LoadingScreen(
     simulationViewModel: SimulationViewModel,
@@ -69,7 +73,7 @@ fun LoadingScreen(
                         simulationViewModel.update()
                         navController.navigate("composelikeInterface")
                     }
-                }
+                },
             )
         }
     }

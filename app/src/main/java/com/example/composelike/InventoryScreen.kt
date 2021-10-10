@@ -13,6 +13,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.example.composelike.ui.theme.DoublePlusGreen
+import com.example.composelike.ui.theme.ElectricTeal
 
 @Composable
 fun InventoryScreen(
@@ -27,8 +29,8 @@ fun InventoryScreen(
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         item {
-            Text("INVENTORY")
-            Text("-~-~-~-~-")
+            Text(color = DoublePlusGreen, text = "INVENTORY")
+            Text(color = ElectricTeal, text = "-~-~-~-~-")
             Spacer(Modifier.height(8.dp))
         }
         for (entry in inventoryEntries!!) {

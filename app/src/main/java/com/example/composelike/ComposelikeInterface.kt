@@ -12,9 +12,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
+import com.example.composelike.ui.theme.CautionYellow
+import com.example.composelike.ui.theme.DoublePlusGreen
+import com.example.composelike.ui.theme.ElectricTeal
+import com.example.composelike.ui.theme.VibrantMagenta
 
 @Composable
 fun ComposelikeHud(hudStrings: Map<String, String>) {
+    // TODO: A more refined HUD with numbers that change color based on player status,
+    //  and also some images.
     Row {
         Text(hudStrings.getOrElse("hp") { "display error!" })
         Spacer(Modifier.width(28.dp))
@@ -40,18 +46,17 @@ fun ComposelikeHud(hudStrings: Map<String, String>) {
 
 @Composable
 fun ComposelikeTilemap(tilemapStrings: List<String>) {
+    // TODO: Long-Term: Convert this portion of the UI to something based on the Canvas using
+    //  a Cell-based system.
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
-        for (line in tilemapStrings) {
-            item { Text(line) }
+        tilemapStrings.forEach {
+            item { Text(it) }
         }
     }
 }
-
-// TODO: Perhaps a Fog of War toggle for development purposes. Such a thing would be appropriate
-//  for a "Wizard Mode" down the road, as well.
 
 @Composable
 fun ComposelikeTouchControls(
@@ -60,18 +65,21 @@ fun ComposelikeTouchControls(
 ) {
     Row {
         Text(
+            color = CautionYellow,
             text = "[MAP]",
             modifier = Modifier.clickable { navController.navigate("mapScreen") },
             fontSize = 17.sp
         )
         Spacer(Modifier.width(8.dp))
         Text(
+            color = CautionYellow,
             text = "[LOG]",
             modifier = Modifier.clickable { navController.navigate("messageLog") },
             fontSize = 17.sp
         )
         Spacer(Modifier.width(8.dp))
         Text(
+            color = ElectricTeal,
             text = "[Y]",
             modifier = Modifier.clickable {
                 simulationViewModel.advanceSimByMove(MovementDirection.UpLeft())
@@ -80,6 +88,7 @@ fun ComposelikeTouchControls(
         )
         Spacer(Modifier.width(8.dp))
         Text(
+            color = ElectricTeal,
             text = "[K]",
             modifier = Modifier.clickable {
                 simulationViewModel.advanceSimByMove(MovementDirection.Up())
@@ -88,6 +97,7 @@ fun ComposelikeTouchControls(
         )
         Spacer(Modifier.width(8.dp))
         Text(
+            color = ElectricTeal,
             text = "[U]",
             modifier = Modifier.clickable {
                 simulationViewModel.advanceSimByMove(MovementDirection.UpRight())
@@ -96,12 +106,14 @@ fun ComposelikeTouchControls(
         )
         Spacer(Modifier.width(8.dp))
         Text(
+            color = CautionYellow,
             text = "[INV]",
             modifier = Modifier.clickable { navController.navigate("inventoryScreen") },
             fontSize = 17.sp
         )
         Spacer(Modifier.width(8.dp))
         Text(
+            color = CautionYellow,
             text = "[CHR]",
             modifier = Modifier.clickable { }, // TODO
             fontSize = 17.sp
@@ -112,6 +124,7 @@ fun ComposelikeTouchControls(
     Spacer(Modifier.height(8.dp))
     Row {
         Text(
+            color = DoublePlusGreen,
             text = "[<]",
             modifier = Modifier.clickable {
                 // TODO: Stairs up.
@@ -120,6 +133,7 @@ fun ComposelikeTouchControls(
         )
         Spacer(Modifier.width(8.dp))
         Text(
+            color = ElectricTeal,
             text = "[H]",
             modifier = Modifier.clickable {
                 simulationViewModel.advanceSimByMove(MovementDirection.Left())
@@ -128,6 +142,7 @@ fun ComposelikeTouchControls(
         )
         Spacer(Modifier.width(8.dp))
         Text(
+            color = VibrantMagenta,
             text = "[.]",
             modifier = Modifier.clickable {
                 simulationViewModel.advanceSimByMove(MovementDirection.Stationary())
@@ -136,6 +151,7 @@ fun ComposelikeTouchControls(
         )
         Spacer(Modifier.width(8.dp))
         Text(
+            color = ElectricTeal,
             text = "[L]",
             modifier = Modifier.clickable {
                 simulationViewModel.advanceSimByMove(MovementDirection.Right())
@@ -144,6 +160,7 @@ fun ComposelikeTouchControls(
         )
         Spacer(Modifier.width(8.dp))
         Text(
+            color = DoublePlusGreen,
             text = "[>]",
             modifier = Modifier.clickable {
                 // TODO: Stairs down.
@@ -154,6 +171,7 @@ fun ComposelikeTouchControls(
     Spacer(Modifier.height(8.dp))
     Row {
         Text(
+            color = ElectricTeal,
             text = "[B]",
             modifier = Modifier.clickable {
                 simulationViewModel.advanceSimByMove(MovementDirection.DownLeft())
@@ -162,6 +180,7 @@ fun ComposelikeTouchControls(
         )
         Spacer(Modifier.width(8.dp))
         Text(
+            color = ElectricTeal,
             text = "[J]",
             modifier = Modifier.clickable {
                 simulationViewModel.advanceSimByMove(MovementDirection.Down())
@@ -170,6 +189,7 @@ fun ComposelikeTouchControls(
         )
         Spacer(Modifier.width(8.dp))
         Text(
+            color = ElectricTeal,
             text = "[N]",
             modifier = Modifier.clickable {
                 simulationViewModel.advanceSimByMove(MovementDirection.DownRight())
@@ -184,7 +204,8 @@ fun ComposelikeTouchControls(
 fun ComposelikeMessageLog(messageLog: List<String>) {
     LazyColumn(
         modifier = Modifier.fillMaxWidth(),
-        horizontalAlignment = Alignment.CenterHorizontally
+        horizontalAlignment = Alignment.CenterHorizontally,
+        reverseLayout = true,
     ) {
         for (msg in messageLog.reversed()) {
             item { Text(msg) }
@@ -195,6 +216,8 @@ fun ComposelikeMessageLog(messageLog: List<String>) {
 @Composable
 fun ComposelikeInterface(simulationViewModel: SimulationViewModel, navController: NavController) {
 
+    // TODO: Long-Term: Put together a real theme and apply it to all the Composables.
+
     val hudStrings by simulationViewModel.hudStrings.observeAsState()
     val tilemapStrings by simulationViewModel.tilemapStrings.observeAsState()
     val messageLog by simulationViewModel.messageLogStrings.observeAsState()
@@ -204,12 +227,12 @@ fun ComposelikeInterface(simulationViewModel: SimulationViewModel, navController
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Some HUD information:
-        if (hudStrings != null) ComposelikeHud(hudStrings!!)
+        hudStrings?.let { ComposelikeHud(it) }
         // The Tilemap display:
-        if (tilemapStrings != null) ComposelikeTilemap(tilemapStrings!!)
+        tilemapStrings?.let { ComposelikeTilemap(it) }
         // Touch Controls:
         ComposelikeTouchControls(simulationViewModel, navController)
         // A LazyColumn of the entire Message Log, starting with the tail end.
-        if (messageLog != null) ComposelikeMessageLog(messageLog!!)
+        messageLog?.let { ComposelikeMessageLog(it) }
     }
 }

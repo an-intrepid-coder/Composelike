@@ -6,6 +6,9 @@ import androidx.compose.material.darkColors
 import androidx.compose.material.lightColors
 import androidx.compose.runtime.Composable
 
+// TODO: Long-Term: A Theme which is consistent throughout the app and uses best practices within
+//  the Composable functions.
+
 private val DarkColorPalette = darkColors(
     primary = Purple200,
     primaryVariant = Purple700,
