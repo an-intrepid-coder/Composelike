@@ -11,7 +11,6 @@ enum class ActorFaction {
 }
 
 sealed class Actor(
-    // TODO: Optimization: I can probably optimize this further.
     var coordinates: Coordinates,
     val name: String,
     val actorFaction: ActorFaction = ActorFaction.NEUTRAL,
@@ -41,14 +40,31 @@ sealed class Actor(
         )
     }
 
+    fun inVisionRange(target: Coordinates): Boolean {
+        return target.euclideanDistance(coordinates) <= visionDistance
+    }
+
+    fun visionRange(): MapRect {
+        return MapRect(
+            origin = Coordinates(
+                x = coordinates.x - visionDistance,
+                y = coordinates.y - visionDistance
+            ),
+            width = visionDistance * 2,
+            height = visionDistance * 2
+        )
+    }
+
     fun canSeeTile(tile: Tile, simulation: ComposelikeSimulation): Boolean {
-        if (simulation.tilemap == null) return false
-        if (tile.coordinates.euclideanDistance(coordinates) > visionDistance) return false
-        val line = coordinates.bresenhamLine(tile.coordinates)
-        return simulation.tilemap!!.tiles()
-            .asSequence()
-            .filter { line.contains(it.coordinates) }
-            .none { it.blocksSightLine }
+        simulation.tilemap?.let {
+            val line = coordinates.bresenhamLine(tile.coordinates)
+            return inVisionRange(tile.coordinates) &&
+                    simulation.tilemap!!.tiles()
+                        .asSequence()
+                        .filter { line.contains(it.coordinates) }
+                        .none { it.blocksSightLine }
+        }
+        return false
     }
 
     /**

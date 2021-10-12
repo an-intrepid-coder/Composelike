@@ -12,10 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.NavController
-import com.example.composelike.ui.theme.CautionYellow
-import com.example.composelike.ui.theme.DoublePlusGreen
-import com.example.composelike.ui.theme.ElectricTeal
-import com.example.composelike.ui.theme.VibrantMagenta
+import com.example.composelike.ui.theme.*
 
 @Composable
 fun ComposelikeHud(hudStrings: Map<String, String>) {
@@ -223,7 +220,8 @@ fun ComposelikeInterface(simulationViewModel: SimulationViewModel, navController
     val messageLog by simulationViewModel.messageLogStrings.observeAsState()
 
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         // Some HUD information:

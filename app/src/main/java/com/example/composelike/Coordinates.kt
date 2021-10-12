@@ -39,7 +39,7 @@ data class Coordinates(val x: Int, val y: Int) {
             Algorithm pseudocode courtesy of Wikipedia:
             https://en.wikipedia.org/wiki/Bresenham%27s_line_algorithm#All_cases
          */
-        var line = listOf<Coordinates>()
+        val line = mutableListOf<Coordinates>()
         var plottingX = x
         var plottingY = y
         val dx = abs(other.x - x)
@@ -49,7 +49,7 @@ data class Coordinates(val x: Int, val y: Int) {
         var err = dx + dy
         while (true) {
             if (plottingX == other.x && plottingY == other.y) break
-            line = line.plus(Coordinates(plottingX, plottingY))
+            line.add(Coordinates(plottingX, plottingY))
             val err2 = err * 2
             if (err2 >= dy) {
                 err += dy
@@ -82,6 +82,8 @@ data class Coordinates(val x: Int, val y: Int) {
      * TODO: It's going to get a little funky using this for map generation and also for
      *  pathfinding. I'll need to make the parameters more complicated or else split this into
      *  multiple functions with different sets of parameters, eventually.
+     *
+     * TODO: Waypoints!
      */
     // Requires API Level 24.
     @RequiresApi(Build.VERSION_CODES.N)

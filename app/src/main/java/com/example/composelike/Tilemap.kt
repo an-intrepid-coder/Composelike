@@ -3,28 +3,48 @@ package com.example.composelike
 import android.os.Build
 import androidx.annotation.RequiresApi
 
+const val dimensionCap = 80 // <-- This will increase with optimizations.
+
+data class MapRect(val origin: Coordinates, val width: Int, val height: Int) {
+    fun contains(target: Coordinates): Boolean {
+        return target.x >= origin.x &&
+                target.x < origin.x + width &&
+                target.y >= origin.y &&
+                target.y < origin.y + height
+    }
+
+    val cols = origin.x until (origin.x + width)
+    val rows = origin.y until (origin.y + height)
+
+    fun asCoordinates(): List<Coordinates> {
+        var coordinatesList = listOf(origin)
+        rows.forEach { row ->
+            cols.forEach { col ->
+                coordinatesList = coordinatesList.plus(
+                    Coordinates(origin.x + col, origin.y + row)
+                )
+            }
+        }
+        return coordinatesList
+    }
+}
+
 sealed class Tilemap(
     initCols: Int,
     initRows: Int,
     private val _parentSimulation: ComposelikeSimulation,
     initTileType: String? = null
 ) {
-    private val _dimensionCap = 40
     /*
         Dev Note: There is a limit to how big a Tilemap can be before it causes performance
         issues. TODO: Some kind of resource check during map initialization.
-
-        This is only an issue for very large maps (greater than 100x100) but it would be nice
-        to have an optimized solution down the road which can handle such maps. For now, 40x40
-        is a very safe, practical, and performant cap.
-
-        TODO: Optimization: This class can probably be optimized a lot.
      */
-    val cols = if (initCols > _dimensionCap) _dimensionCap else initCols
-    val rows = if (initRows > _dimensionCap) _dimensionCap else initRows
+    val cols = if (initCols > dimensionCap) dimensionCap else initCols
+    val rows = if (initRows > dimensionCap) dimensionCap else initRows
 
-    private var _tiles: List<List<Tile>> = initTiles(initTileType)
+    val mapRect = MapRect(Coordinates(0, 0), cols, rows)
 
+    private var _tiles: MutableList<MutableList<Tile>> = initTiles(initTileType)
     fun tiles(): List<Tile> { return _tiles.flatten() }
 
     fun getTileOrNull(coordinates: Coordinates): Tile? {
@@ -32,7 +52,9 @@ sealed class Tilemap(
     }
 
     fun setFieldOfView(actor: Actor) {
-        _tiles = mappedTiles { tile ->
+        // TODO: Optimize
+        val range = if (_parentSimulation.debugMode) mapRect else actor.visionRange()
+        mapTiles(rect = range) { tile ->
             if (_parentSimulation.debugMode) tile.seen()
             else if (actor.canSeeTile(tile, _parentSimulation)) tile.seen()
             else tile.unSeen()
@@ -51,13 +73,13 @@ sealed class Tilemap(
      * If initTileType is "wall" or "floor" then it will init the whole Tilemap to that tile type.
      * Otherwise, it randomly picks between Floor and Wall tiles for the whole map.
      */
-    private fun initTiles(initTileType: String? = null): List<List<Tile>> {
-        var newTilemap: List<List<Tile>> = listOf()
+    private fun initTiles(initTileType: String? = null): MutableList<MutableList<Tile>> {
+        val newTilemap = mutableListOf<MutableList<Tile>>()
         repeat (rows) { row ->
-            var newRow: List<Tile> = listOf()
+            newTilemap.add(mutableListOf())
             repeat (cols) { col ->
                 val coordinates = Coordinates(col, row)
-                newRow = newRow.plus(
+                newTilemap[row].add(
                     when (initTileType) {
                         "wall" -> Tile.Wall(coordinates)
                         "floor" -> Tile.Floor(coordinates)
@@ -65,36 +87,47 @@ sealed class Tilemap(
                     }
                 )
             }
-            newTilemap = newTilemap.plus(listOf(newRow))
         }
         return newTilemap
     }
 
     /**
-     * Returns new tiles by mapping mapFunction to each tile.
+     * Applies the desired mapFunction to a subset of the Tilemap.
      */
-    private fun mappedTiles(mapFunction: (Tile) -> Tile): List<List<Tile>> {
-        /*
-            TODO: Optimization: This function is the backbone of the map generation process and
-                also runs every turn to set the Field of View. It can probably be heavily optimized
-                using Sequences. <--- Next up, I think.
-         */
-        var newTilemap: List<List<Tile>> = listOf()
-        repeat (rows) { row ->
-            var newRow: List<Tile> = listOf()
-            repeat (cols) { col ->
-                newRow = newRow.plus(mapFunction(_tiles[row][col]))
+    private fun mapTiles(
+        rect: MapRect = this.mapRect,
+        mapFunction: (Tile) -> Tile,
+    ) {
+        _tiles.apply {
+            rect.rows.forEach { row ->
+                rect.cols.forEach { col ->
+                    if (mapRect.contains(Coordinates(col, row)))
+                        this[row][col] = mapFunction(this[row][col])
+                }
             }
-            newTilemap = newTilemap.plus(listOf(newRow))
         }
-        return newTilemap
+    }
+
+    /**
+     * Returns a new Tilemap as a pure function of the old one, for use primarily with Cellular
+     * Automata. It is slower but needed for some kinds of map manipulation.
+     */
+    fun mappedTiles(
+        mapFunction: (Tile) -> Tile,
+    ): MutableList<MutableList<Tile>> {
+        return _tiles
+            .map { row ->
+                row.map { tile ->
+                    mapFunction(tile)
+                }.toMutableList()
+            }.toMutableList()
     }
 
     /**
      * Places Wall tiles around the edges of the map.
      */
     fun withEdgeWalls() {
-        _tiles = mappedTiles { tile ->
+        mapTiles { tile ->
             if (isEdgeCoordinate(tile.coordinates)) Tile.Wall(tile.coordinates) else tile
         }
     }
@@ -103,18 +136,16 @@ sealed class Tilemap(
      * Places a random StairsDown Tile on an existing walkable tile.
      */
     fun withRandomStairsDown() {
-        val targetTile = randomWalkableTile()
-        _tiles = mappedTiles { tile ->
-            if (tile == targetTile) Tile.StairsDown(targetTile.coordinates) else tile
-        }
+        val target = randomWalkableTile().coordinates
+        _tiles[target.y][target.x] = Tile.StairsDown(target)
     }
 
     /**
      * A blank map with walls around the edges.
      */
     class Testing(
-        cols: Int,
-        rows: Int,
+        cols: Int = dimensionCap,
+        rows: Int = dimensionCap,
         parentSimulation: ComposelikeSimulation
     ) : Tilemap(cols, rows, parentSimulation, "floor") {
         init { withEdgeWalls() }
@@ -148,8 +179,8 @@ sealed class Tilemap(
      * A cave-like map made with a Cellular Automata.
      */
     class Cave(
-        cols: Int,
-        rows: Int,
+        cols: Int = dimensionCap,
+        rows: Int = dimensionCap,
         parentSimulation: ComposelikeSimulation
     ) : Tilemap(cols, rows, parentSimulation) {
         init {
@@ -179,10 +210,8 @@ sealed class Tilemap(
     }
 
     private fun insertTiles(tiles: List<Tile>) {
-        _tiles = mappedTiles { tile ->
-            if (tile.coordinates in tiles.map { it.coordinates })
-                tiles.first { it.coordinates == tile.coordinates }
-            else tile
+        tiles.forEach { tile ->
+            _tiles[tile.coordinates.y][tile.coordinates.x] = tile
         }
     }
 
@@ -261,7 +290,8 @@ sealed class Tilemap(
      */
     @RequiresApi(Build.VERSION_CODES.N)
     fun withConnectedRooms(nodesList: List<Coordinates>) {
-        // TODO: Waypoints!
+        // TODO: A more traditional arrangement of room connections, via some mathematical
+        //  formula. I bet I can think of something.
         val shuffledNodes = nodesList.shuffled() as MutableList<Coordinates>
 
         val hallTiles = mutableListOf<Tile>()
@@ -269,23 +299,24 @@ sealed class Tilemap(
         var previous = shuffledNodes.removeFirst()
 
         while (shuffledNodes.isNotEmpty()) {
-            shuffledNodes.removeFirstOrNull()?.let {
-                it.shortestPathTo(
+            shuffledNodes.removeFirstOrNull()?.let { node ->
+                node.shortestPathTo(
                     goal = previous,
                     xBound = cols,
                     yBound = rows,
                     simulation = _parentSimulation,
-                    heuristicFunction = { node, actor, simulation ->
+                    heuristicFunction = { node, _, _ ->
                         node.euclideanDistance(previous)
                     }
                 )?.let { path ->
-                    for (coordinates in path) {
+                    path.forEach { coordinates ->
                         getTileOrNull(coordinates)?.let { tile ->
-                            if (tile.name == "Wall Tile") hallTiles.add(Tile.Floor(coordinates))
+                            if (tile.name == "Wall Tile")
+                                hallTiles.add(Tile.Floor(coordinates))
                         }
                     }
                 }
-                previous = it
+                previous = node
             }
         }
         insertTiles(hallTiles)
@@ -297,8 +328,8 @@ sealed class Tilemap(
      */
     @RequiresApi(Build.VERSION_CODES.N)
     class ClassicDungeon(
-        cols: Int,
-        rows: Int,
+        cols: Int = dimensionCap,
+        rows: Int = dimensionCap,
         parentSimulation: ComposelikeSimulation
     ) : Tilemap(cols, rows, parentSimulation, "wall") {
         /*

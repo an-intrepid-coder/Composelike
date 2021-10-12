@@ -20,7 +20,7 @@ class ComposelikeSimulation {
     val actors = ActorContainer()
     val messageLog = MessageLog()
 
-    val debugMode = true
+    val debugMode = false //true
 
     // TODO: A HudStrings class.
     fun exportHudStrings(): Map<String, String> {
@@ -62,8 +62,7 @@ class ComposelikeSimulation {
     // TODO: Long-Term: CharacterCell class, replacing the String-based approach.
 
     private fun exportDisplayStrings(origin: Coordinates, ends: Coordinates): List<String>? {
-        // TODO: I can probably optimize this more, and improve its style. That will need to
-        //  happen soon-ish.
+        // TODO: I can probably optimize this more, and improve its style.
         if (tilemap == null) return null
         var newDisplayStrings = listOf<String>()
         for (row in origin.y until ends.y) {
@@ -183,10 +182,10 @@ class ComposelikeSimulation {
     @RequiresApi(Build.VERSION_CODES.N)
     fun initSimulation() {
         // Currently this is a placeholder test scenario:
-        tilemap = Tilemap.ClassicDungeon(40, 40, this)
+        tilemap = Tilemap.ClassicDungeon(parentSimulation = this)
 
-        //generateSnakes(2)
-        //generateSmallGoblinPopulation()
+        generateSnakes(2)
+        generateSmallGoblinPopulation()
 
         spawnPlayer()?.let { player ->
             tilemap?.setFieldOfView(player)
