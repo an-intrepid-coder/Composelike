@@ -65,8 +65,14 @@ class SimulationViewModel : ViewModel() {
     private var _mapScreenStrings = MutableLiveData<List<String>>(listOf())
     var mapScreenStrings: LiveData<List<String>> = _mapScreenStrings
 
-    private fun updateMapScreenStrings() {
-        _mapScreenStrings.value = _simulation?.exportMapScreenStrings()
+    fun updateMapScreenStrings() {
+        _simulation?.let { simulation ->
+            simulation.tilemap?.setFieldOfView(
+                actor = simulation.actors.getPlayer(),
+                fullMapPass = true
+            )
+            _mapScreenStrings.value = simulation.exportMapScreenStrings()
+        }
     }
 
     private var _inventoryEntries = MutableLiveData<List<Item>>(listOf())
@@ -93,7 +99,6 @@ class SimulationViewModel : ViewModel() {
     fun update() {
         updateHudStrings()
         updateTilemapStrings()
-        updateMapScreenStrings()
         updateInventoryEntries()
         updateMessageLogStrings()
     }

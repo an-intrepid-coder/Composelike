@@ -50,8 +50,8 @@ sealed class Actor(
                 x = coordinates.x - visionDistance,
                 y = coordinates.y - visionDistance
             ),
-            width = visionDistance * 2,
-            height = visionDistance * 2
+            width = visionDistance * 2 + 1,
+            height = visionDistance * 2 + 1
         )
     }
 

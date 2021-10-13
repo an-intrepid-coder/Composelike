@@ -6,13 +6,6 @@ import androidx.annotation.RequiresApi
 const val dimensionCap = 80 // <-- This will increase with optimizations.
 
 data class MapRect(val origin: Coordinates, val width: Int, val height: Int) {
-    fun contains(target: Coordinates): Boolean {
-        return target.x >= origin.x &&
-                target.x < origin.x + width &&
-                target.y >= origin.y &&
-                target.y < origin.y + height
-    }
-
     val cols = origin.x until (origin.x + width)
     val rows = origin.y until (origin.y + height)
 
@@ -27,6 +20,10 @@ data class MapRect(val origin: Coordinates, val width: Int, val height: Int) {
         }
         return coordinatesList
     }
+
+    fun contains(coordinates: Coordinates): Boolean {
+        return asCoordinates().contains(coordinates)
+    }
 }
 
 sealed class Tilemap(
@@ -39,10 +36,12 @@ sealed class Tilemap(
         Dev Note: There is a limit to how big a Tilemap can be before it causes performance
         issues. TODO: Some kind of resource check during map initialization.
      */
-    val cols = if (initCols > dimensionCap) dimensionCap else initCols
-    val rows = if (initRows > dimensionCap) dimensionCap else initRows
+    val numCols = if (initCols > dimensionCap) dimensionCap else initCols
+    val numRows = if (initRows > dimensionCap) dimensionCap else initRows
+    val cols = 0 until numCols
+    val rows = 0 until numRows
 
-    val mapRect = MapRect(Coordinates(0, 0), cols, rows)
+    val mapRect = MapRect(Coordinates(0, 0), numCols, numRows)
 
     private var _tiles: MutableList<MutableList<Tile>> = initTiles(initTileType)
     fun tiles(): List<List<Tile>> = _tiles
@@ -52,9 +51,15 @@ sealed class Tilemap(
         return _tiles.getOrNull(coordinates.y)?.getOrNull(coordinates.x)
     }
 
-    fun setFieldOfView(actor: Actor) {
-        val range = if (_parentSimulation.debugMode) mapRect else actor.visionRange()
-        mapTiles(rect = range) { tile ->
+    fun setFieldOfView(
+        actor: Actor,
+        fullMapPass: Boolean = false
+    ) {
+        val range = when (fullMapPass) {
+            true -> mapRect
+            false -> if (_parentSimulation.debugMode) mapRect else actor.visionRange()
+        }
+        mapTiles(mapRect = range) { tile ->
             if (_parentSimulation.debugMode) tile.seen()
             else if (actor.canSeeTile(tile, _parentSimulation)) tile.seen()
             else tile.unSeen()
@@ -64,7 +69,7 @@ sealed class Tilemap(
     private fun isEdgeCoordinate(coordinates: Coordinates): Boolean {
         val col = coordinates.x
         val row = coordinates.y
-        return (row == 0 || col == 0 || row == rows - 1 || col == cols - 1)
+        return (row == 0 || col == 0 || row == numRows - 1 || col == numCols - 1)
     }
 
     private fun randomWalkableTile(): Tile { return flattenedTiles().filter { it.walkable }.random() }
@@ -75,9 +80,9 @@ sealed class Tilemap(
      */
     private fun initTiles(initTileType: String? = null): MutableList<MutableList<Tile>> {
         val newTilemap = mutableListOf<MutableList<Tile>>()
-        repeat (rows) { row ->
+        repeat (numRows) { row ->
             newTilemap.add(mutableListOf())
-            repeat (cols) { col ->
+            repeat (numCols) { col ->
                 val coordinates = Coordinates(col, row)
                 newTilemap[row].add(
                     when (initTileType) {
@@ -95,14 +100,13 @@ sealed class Tilemap(
      * Applies the desired mapFunction to a subset of the Tilemap.
      */
     private fun mapTiles(
-        rect: MapRect = this.mapRect,
+        mapRect: MapRect = this.mapRect,
         mapFunction: (Tile) -> Tile,
     ) {
-        _tiles.apply {
-            rect.rows.forEach { row ->
-                rect.cols.forEach { col ->
-                    if (mapRect.contains(Coordinates(col, row)))
-                        this[row][col] = mapFunction(this[row][col])
+        mapRect.rows.forEach { row ->
+            mapRect.cols.forEach { col ->
+                getTileOrNull(Coordinates(col, row))?.let { tile ->
+                    _tiles[row][col] = mapFunction(tile)
                 }
             }
         }
@@ -220,20 +224,24 @@ sealed class Tilemap(
      * It will default to "stamping" rooms in a grid-like manner for now, but eventually it will
      * do more interesting things.
      */
-    fun withStampedRooms(): List<Coordinates> {
-        val roomSizeRange = 4..6
-        val roomSpacing = 3..9
-
+    fun withStampedRoomsGrid(
+        roomShape: String = "rectangular",
+        roomSizeRange: IntRange = 4..6,
+        roomSpacing: IntRange = 3..9
+    ): List<Coordinates> {
+        // TODO: Different room shapes.
         val nodesList = mutableListOf<Coordinates>()
         var roomsStamped = 0
         var currentRoomTopLeft = Coordinates(1, 1)
         var currentRoomWidth = roomSizeRange.random()
         var currentRoomHeight = roomSizeRange.random()
-
         val roomTiles = mutableListOf<Tile>()
 
-        while (currentRoomTopLeft.y + roomSizeRange.last + 1 < rows - 1) {
+        fun stamping(): Boolean {
+            return currentRoomTopLeft.y + roomSizeRange.last + 1 < numRows - 1
+        }
 
+        fun stampRoom() {
             repeat (currentRoomHeight) { row ->
                 repeat (currentRoomWidth) { col ->
                     roomTiles.add(
@@ -247,22 +255,26 @@ sealed class Tilemap(
                     )
                 }
             }
+        }
 
+        fun addNode() {
             nodesList.add(
                 Coordinates(
                     x = currentRoomTopLeft.x + currentRoomWidth / 2,
                     y = currentRoomTopLeft.y + currentRoomHeight / 2
                 )
             )
+        }
 
+        fun setupNextRoom() {
             roomsStamped++
             val newRoomWidth = roomSizeRange.random()
             val newRoomHeight = roomSizeRange.random()
             val spacing = roomSpacing.random()
             var nextTopLeft = Coordinates(
-                x = if (currentRoomTopLeft.x + currentRoomWidth + spacing + newRoomWidth < cols - 1)
+                x = if (currentRoomTopLeft.x + currentRoomWidth + spacing + newRoomWidth < numCols - 1)
                     currentRoomTopLeft.x + currentRoomWidth + spacing
-                    else 1,
+                else 1,
                 y = currentRoomTopLeft.y
             )
 
@@ -278,6 +290,12 @@ sealed class Tilemap(
             currentRoomWidth = newRoomWidth
         }
 
+        while (stamping()) {
+            stampRoom()
+            addNode()
+            setupNextRoom()
+        }
+
         insertTiles(roomTiles)
 
         return nodesList
@@ -286,24 +304,22 @@ sealed class Tilemap(
     /**
      * Runs a series of A* paths between the nodes in the nodesList and carves out hallways.
      * Will not override Room Tiles. Will use waypoints and as-yet-undetermined fuzziness and
-     * logic in order to connect the nodes in a neat way. <-- TODO
+     * logic in order to connect the nodes in a neat way.
      */
     @RequiresApi(Build.VERSION_CODES.N)
     fun withConnectedRooms(nodesList: List<Coordinates>) {
-        // TODO: A more traditional arrangement of room connections, via some mathematical
-        //  formula. I bet I can think of something.
+        // TODO: This was a placeholder draft. Time to make real halls.
+
         val shuffledNodes = nodesList.shuffled() as MutableList<Coordinates>
-
         val hallTiles = mutableListOf<Tile>()
-
         var previous = shuffledNodes.removeFirst()
 
         while (shuffledNodes.isNotEmpty()) {
             shuffledNodes.removeFirstOrNull()?.let { node ->
                 node.shortestPathTo(
                     goal = previous,
-                    xBound = cols,
-                    yBound = rows,
+                    xBound = numCols,
+                    yBound = numRows,
                     simulation = _parentSimulation,
                     heuristicFunction = { node, _, _ ->
                         node.euclideanDistance(previous)
@@ -357,7 +373,7 @@ sealed class Tilemap(
                 look feasible at this point. Excellent stuff!
          */
         init {
-            withConnectedRooms(withStampedRooms())
+            withConnectedRooms(withStampedRoomsGrid())
             // TODO: Refinement: ^ These two functions are in the early stages and should become
             //  much more complex and interesting soon.
 

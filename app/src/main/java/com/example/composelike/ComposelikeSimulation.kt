@@ -87,12 +87,12 @@ class ComposelikeSimulation {
     }
 
     fun exportTilemapStrings(tilemapDisplayCols: Int, tilemapDisplayRows: Int): List<String>? {
-        tilemap?.let {
+        return tilemap?.let {
             val origin = Coordinates(
                 _camera.coordinates().x - tilemapDisplayCols / 2,
                 _camera.coordinates().y - tilemapDisplayRows / 2
             )
-            return exportDisplayStrings(
+            exportDisplayStrings(
                 mapRect = MapRect(
                     origin = origin,
                     width = tilemapDisplayCols,
@@ -100,20 +100,18 @@ class ComposelikeSimulation {
                 )
             )
         }
-        return null
     }
 
     fun exportMapScreenStrings(): List<String>? {
-        tilemap?.let {
-            return exportDisplayStrings(
+        return tilemap?.let {
+            exportDisplayStrings(
                 mapRect = MapRect(
                     origin = Coordinates(0, 0),
-                    width = tilemap!!.cols,
-                    height = tilemap!!.rows
+                    width = tilemap!!.numCols,
+                    height = tilemap!!.numRows
                 )
             )
         }
-        return null
     }
 
     fun nextTurnByPlayerMove(movementDirection: MovementDirection) {
@@ -179,8 +177,8 @@ class ComposelikeSimulation {
         // Currently this is a placeholder test scenario:
         tilemap = Tilemap.ClassicDungeon(parentSimulation = this)
 
-        generateSnakes(2)
-        generateSmallGoblinPopulation()
+        //generateSnakes(2)
+        //generateSmallGoblinPopulation()
 
         spawnPlayer()?.let { player ->
             tilemap?.setFieldOfView(player)

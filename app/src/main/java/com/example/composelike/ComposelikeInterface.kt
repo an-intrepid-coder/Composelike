@@ -64,7 +64,10 @@ fun ComposelikeTouchControls(
         Text(
             color = CautionYellow,
             text = "[MAP]",
-            modifier = Modifier.clickable { navController.navigate("mapScreen") },
+            modifier = Modifier.clickable {
+                simulationViewModel.updateMapScreenStrings()
+                navController.navigate("mapScreen")
+            },
             fontSize = 17.sp
         )
         Spacer(Modifier.width(8.dp))

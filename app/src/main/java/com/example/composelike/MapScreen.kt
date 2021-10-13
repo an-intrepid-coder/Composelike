@@ -17,7 +17,7 @@ fun MapScreen(simulationViewModel: SimulationViewModel) {
     LazyRow {
         item {
             LazyColumn {
-                for (line in mapScreenStrings!!) {
+                mapScreenStrings?.forEach { line ->
                     item { Text(text = line, fontSize = 12.sp) }
                 }
             }

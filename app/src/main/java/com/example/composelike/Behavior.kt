@@ -45,8 +45,8 @@ sealed class Behavior(
 
             val pathToPlayer = actor.coordinates.shortestPathTo(
                 goal = playerLocation,
-                xBound = simulation.tilemap!!.cols,
-                yBound = simulation.tilemap!!.rows,
+                xBound = simulation.tilemap!!.numCols,
+                yBound = simulation.tilemap!!.numRows,
                 actor = actor,
                 simulation = simulation,
                 heuristicFunction = { node, actor, simulation ->
