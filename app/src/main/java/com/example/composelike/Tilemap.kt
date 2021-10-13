@@ -45,14 +45,14 @@ sealed class Tilemap(
     val mapRect = MapRect(Coordinates(0, 0), cols, rows)
 
     private var _tiles: MutableList<MutableList<Tile>> = initTiles(initTileType)
-    fun tiles(): List<Tile> { return _tiles.flatten() }
+    fun tiles(): List<List<Tile>> = _tiles
+    fun flattenedTiles(): List<Tile> { return _tiles.flatten() }
 
     fun getTileOrNull(coordinates: Coordinates): Tile? {
         return _tiles.getOrNull(coordinates.y)?.getOrNull(coordinates.x)
     }
 
     fun setFieldOfView(actor: Actor) {
-        // TODO: Optimize
         val range = if (_parentSimulation.debugMode) mapRect else actor.visionRange()
         mapTiles(rect = range) { tile ->
             if (_parentSimulation.debugMode) tile.seen()
@@ -67,7 +67,7 @@ sealed class Tilemap(
         return (row == 0 || col == 0 || row == rows - 1 || col == cols - 1)
     }
 
-    private fun randomWalkableTile(): Tile { return tiles().filter { it.walkable }.random() }
+    private fun randomWalkableTile(): Tile { return flattenedTiles().filter { it.walkable }.random() }
 
     /**
      * If initTileType is "wall" or "floor" then it will init the whole Tilemap to that tile type.
@@ -197,7 +197,7 @@ sealed class Tilemap(
                 generations = 1,
                 decisionFunction = { tile ->
                     val neighborThreshold = 4
-                    tile.getNeighbors(tiles())
+                    tile.getNeighbors(flattenedTiles())
                         // TODO: Test that this wouldn't be better as a Sequence.
                         .filter { it.walkable }
                         .size >= neighborThreshold

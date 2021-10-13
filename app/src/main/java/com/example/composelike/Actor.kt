@@ -59,7 +59,7 @@ sealed class Actor(
         simulation.tilemap?.let {
             val line = coordinates.bresenhamLine(tile.coordinates)
             return inVisionRange(tile.coordinates) &&
-                    simulation.tilemap!!.tiles()
+                    simulation.tilemap!!.flattenedTiles()
                         .asSequence()
                         .filter { line.contains(it.coordinates) }
                         .none { it.blocksSightLine }

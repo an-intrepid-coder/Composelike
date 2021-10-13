@@ -3,7 +3,6 @@ package com.example.composelike
 import kotlin.system.exitProcess
 
 class ActorContainer {
-    // TODO: Optimization: This class can probably be optimized a lot.
     private var _actors = listOf<Actor>()
     fun actors() = _actors
 
@@ -35,8 +34,9 @@ class ActorContainer {
         val totalDamage = 1 + attacker.bonusAttack - defender.bonusDefense
         _actors = _actors.minus(defender)
         defender.harm(totalDamage)
-        simulation
-            .messageLog.addMessage("${attacker.name} did $totalDamage dmg to ${defender.name}.")
+        simulation.messageLog.addMessage(
+            "${attacker.name} did $totalDamage dmg to ${defender.name}."
+        )
         if (defender.isAlive()) {
             _actors = _actors.plus(defender)
             simulation.messageLog.addMessage("... it has ${defender.health} HP remaining.")
@@ -56,34 +56,35 @@ class ActorContainer {
      * Will fight an Actor of a different faction if one is at the intended destination.
      */
     fun moveActor(
-        // TODO: This can be optimized and the style improved more.
         actor: Actor,
         movementDirection: MovementDirection,
         simulation: ComposelikeSimulation,
     ) {
         val targetCoordinates = Coordinates(
-            actor.coordinates.x + movementDirection.dx,
-            actor.coordinates.y + movementDirection.dy
+            x = actor.coordinates.x + movementDirection.dx,
+            y = actor.coordinates.y + movementDirection.dy
         )
-        val targetTile = simulation.tilemap?.getTileOrNull(targetCoordinates)
-        if (targetTile != null) {
-            val tileIsOccupied = simulation.actors.actorCoordinates()
+        simulation.tilemap?.getTileOrNull(targetCoordinates)?.let { targetTile ->
+            val tileIsOccupied = simulation.actors
+                .actorCoordinates()
                 .contains(targetTile.coordinates)
+
             if (targetTile.walkable && !tileIsOccupied) {
                 simulation.actors.removeActor(actor)
                 actor.coordinates = targetCoordinates
                 simulation.actors.addActor(actor)
+            } else if (!targetTile.walkable && actor == simulation.actors.getPlayer()) {
+                simulation.messageLog.addMessage("Can't move there!")
             } else if (tileIsOccupied) {
-                val defender = simulation.actors.getActorByCoordinates(targetCoordinates)
-                if (defender!!.actorFaction != actor.actorFaction) {
-                    simulation.actors.actorsFight(
-                        attacker = actor,
-                        defender = defender,
-                        simulation = simulation
-                    )
+                simulation.actors.getActorByCoordinates(targetCoordinates)?.let { defender ->
+                    if (defender.actorFaction != actor.actorFaction) {
+                        simulation.actors.actorsFight(
+                            attacker = actor,
+                            defender = defender,
+                            simulation = simulation
+                        )
+                    }
                 }
-            } else if (actor == simulation.actors.getPlayer()){
-                simulation.messageLog.addMessage("You can't move there!")
             }
         }
     }

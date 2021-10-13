@@ -3,7 +3,7 @@ package com.example.composelike
 sealed class Tile(
     val name: String,
     val coordinates: Coordinates,
-    val mapRepresentation: String,
+    private val _mapRepresentation: String,
     val walkable: Boolean = true,
     var explored: Boolean = false,
     var visible: Boolean = false,
@@ -27,10 +27,14 @@ sealed class Tile(
         return this
     }
 
+    open fun mapRepresentation(): String {
+        return if (visible || explored) _mapRepresentation else " "
+    }
+
     class Wall(coordinates: Coordinates) : Tile(
         name = "Wall Tile",
         coordinates = coordinates,
-        mapRepresentation = "#",
+        _mapRepresentation = "#",
         walkable = false,
         blocksSightLine = true
     )
@@ -38,8 +42,12 @@ sealed class Tile(
     class Floor(coordinates: Coordinates) : Tile(
         name = "Floor Tile",
         coordinates = coordinates,
-        mapRepresentation = " ."
-    )
+        _mapRepresentation = " ."
+    ) {
+        override fun mapRepresentation(): String {
+            return if (visible) "." else " "
+        }
+    }
 
     /**
      * Room Tiles are marked with their roomNumber in order to make it easier to treat them
@@ -48,14 +56,18 @@ sealed class Tile(
     class Room(coordinates: Coordinates, roomNumber: Int) : Tile(
         name = "Room Tile",
         coordinates = coordinates,
-        mapRepresentation = " .",
+        _mapRepresentation = " .",
         roomNumber = roomNumber
-    )
+    ) {
+        override fun mapRepresentation(): String {
+            return if (visible) "." else " "
+        }
+    }
 
     class Door(coordinates: Coordinates) : Tile(
         name = "Door Tile",
         coordinates = coordinates,
-        mapRepresentation = "+." // <-- Not positive this will be ideal yet.
+        _mapRepresentation = "+." // <-- Not positive this will be ideal yet.
         // TODO: Questions on how to make this interact with FOV in the best way. Probably
         //  having OpenDoor and ClosedDoor and making them switch with an opened() / closed() pair
         //  of functions, similar to seen() and unSeen().
@@ -65,13 +77,13 @@ sealed class Tile(
     class StairsUp(coordinates: Coordinates) : Tile(
         name = "Stairs Up",
         coordinates = coordinates,
-        mapRepresentation = "<"
+        _mapRepresentation = "<"
     )
 
     class StairsDown(coordinates: Coordinates) : Tile(
         name = "Stairs Down",
         coordinates = coordinates,
-        mapRepresentation = ">"
+        _mapRepresentation = ">"
     )
 }
 

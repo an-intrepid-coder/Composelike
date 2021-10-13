@@ -62,13 +62,6 @@ sealed class Behavior(
                     if (walkable == true && occupiedByFriendly != true)
                         node.chebyshevDistance(playerLocation)
                     else scoreDefault
-                    /*
-                        TODO: Optimization: For a Heuristic to be "Admissible" it must never
-                            overestimate the cost from the node to the goal. Since the else
-                            condition here refers to Tiles which are 'dead zones' their cost
-                            is effectively infinite, so I believe this is "Admissible". But that
-                            needs to be tested somehow.
-                     */
                 }
             )
 

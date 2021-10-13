@@ -58,43 +58,32 @@ class ComposelikeSimulation {
         )
     }
 
-    // TODO: Display Strings class
-    // TODO: Long-Term: CharacterCell class, replacing the String-based approach.
+    private fun exportDisplayStrings(mapRect: MapRect): List<String>? {
+        // TODO: Display Strings class
 
-    private fun exportDisplayStrings(origin: Coordinates, ends: Coordinates): List<String>? {
-        // TODO: I can probably optimize this more, and improve its style.
-        if (tilemap == null) return null
-        var newDisplayStrings = listOf<String>()
-        for (row in origin.y until ends.y) {
-            var rowString = ""
-            for (col in origin.x until ends.x) {
-                val tile = tilemap!!.getTileOrNull(Coordinates(col, row))
-                rowString += if (tile != null) {
-                    if (Coordinates(col, row) in actors.actorCoordinates() && tile.visible) {
-                        actors.getActorByCoordinates(Coordinates(col, row))!!.mapRepresentation
-                    } else if (tile.explored){
-                        /*
-                            Since each Tile type has a potentially different series of characters
-                            in their map representation, this logic could get complicated even
-                            as it allows for a lot of cool stuff such as Tiles which animate.
-
-                            TODO: Look in to a more extensible solution.
-                         */
-                        if (tile.name == "Floor Tile" || tile.name == "Room Tile") {
-                            tile.mapRepresentation[if (tile.visible) 1 else 0]
-                        } else {
-                            tile.mapRepresentation
-                        }
-                    } else {
-                        " "
-                    }
-                } else {
-                    " "
-                }
-            }
-            newDisplayStrings = newDisplayStrings.plus(rowString)
+        fun toCell(tile: Tile): String {
+            // TODO: Long-Term: CharacterCell class, replacing the String-based approach.
+            val tileOccupant = actors.getActorByCoordinates(tile.coordinates)?.mapRepresentation
+            return if (tile.visible && tileOccupant != null)
+                tileOccupant.toString()
+            else
+                tile.mapRepresentation()
         }
-        return newDisplayStrings
+
+        return tilemap?.let { tilemap ->
+            val displayStrings = mutableListOf<String>()
+            mapRect.rows.forEach { row ->
+                var rowString = ""
+                val rowRange: IntRange = mapRect.origin.x until (mapRect.origin.x + mapRect.width)
+                rowRange.forEach { col ->
+                    tilemap.getTileOrNull(Coordinates(col, row))?.let { tile ->
+                        rowString += toCell(tile)
+                    }
+                }
+                displayStrings.add(rowString)
+            }
+            displayStrings
+        }
     }
 
     fun exportTilemapStrings(tilemapDisplayCols: Int, tilemapDisplayRows: Int): List<String>? {
@@ -103,20 +92,26 @@ class ComposelikeSimulation {
                 _camera.coordinates().x - tilemapDisplayCols / 2,
                 _camera.coordinates().y - tilemapDisplayRows / 2
             )
-            val ends = Coordinates(
-                origin.x + tilemapDisplayCols,
-                origin.y + tilemapDisplayRows
+            return exportDisplayStrings(
+                mapRect = MapRect(
+                    origin = origin,
+                    width = tilemapDisplayCols,
+                    height = tilemapDisplayRows
+                )
             )
-            return exportDisplayStrings(origin, ends)
         }
         return null
     }
 
     fun exportMapScreenStrings(): List<String>? {
         tilemap?.let {
-            val origin = Coordinates(0, 0)
-            val ends = Coordinates(tilemap!!.cols, tilemap!!.rows)
-            return exportDisplayStrings(origin, ends)
+            return exportDisplayStrings(
+                mapRect = MapRect(
+                    origin = Coordinates(0, 0),
+                    width = tilemap!!.cols,
+                    height = tilemap!!.rows
+                )
+            )
         }
         return null
     }
@@ -136,7 +131,7 @@ class ComposelikeSimulation {
      * Returns a list of Coordinates at which an Actor could spawn (unoccupied walkable tiles).
      */
     private fun validSpawnCoordinates(): List<Coordinates>? {
-        return tilemap?.tiles()
+        return tilemap?.flattenedTiles()
             ?.asSequence()
             ?.filter { !actors.actorCoordinates().contains(it.coordinates) && it.walkable }
             ?.map { it.coordinates }
@@ -147,7 +142,7 @@ class ComposelikeSimulation {
      * For now, generates a goblin for every 30 walkable tiles. Tentative.
      */
     private fun generateSmallGoblinPopulation() {
-        val numGoblins = (tilemap?.tiles()?.filter { it.walkable }?.size ?: 1000) / 30
+        val numGoblins = (tilemap?.flattenedTiles()?.filter { it.walkable }?.size ?: 1000) / 30
         repeat (numGoblins) {
             validSpawnCoordinates()?.let {
                 if (it.isNotEmpty()) actors.addActor(Actor.Goblin(it.random()))
