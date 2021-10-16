@@ -177,8 +177,8 @@ class ComposelikeSimulation {
         // Currently this is a placeholder test scenario:
         tilemap = Tilemap.ClassicDungeon(parentSimulation = this)
 
-        //generateSnakes(2)
-        //generateSmallGoblinPopulation()
+        generateSnakes(2)
+        generateSmallGoblinPopulation()
 
         spawnPlayer()?.let { player ->
             tilemap?.setFieldOfView(player)

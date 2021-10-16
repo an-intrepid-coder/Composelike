@@ -2,8 +2,9 @@ package com.example.composelike
 
 import android.os.Build
 import androidx.annotation.RequiresApi
+import java.lang.Math.min
 
-const val dimensionCap = 80 // <-- This will increase with optimizations.
+const val dimensionCap = 80
 
 data class MapRect(val origin: Coordinates, val width: Int, val height: Int) {
     val cols = origin.x until (origin.x + width)
@@ -24,6 +25,27 @@ data class MapRect(val origin: Coordinates, val width: Int, val height: Int) {
     fun contains(coordinates: Coordinates): Boolean {
         return asCoordinates().contains(coordinates)
     }
+
+    fun plus(other: MapRect): MapRect {
+        return asCoordinates()
+            .plus(other.asCoordinates())
+            .let { allCoordinates ->
+            MapRect(
+                origin = Coordinates(
+                    x = min(origin.x, other.origin.x),
+                    y = min(origin.y, other.origin.y)
+                ),
+                width = allCoordinates
+                    .map { it.x }
+                    .maxOrNull()!!
+                    .minus(origin.x),
+                height = allCoordinates
+                    .map { it.y }
+                    .maxOrNull()!!
+                    .minus(origin.y)
+            )
+        }
+    }
 }
 
 sealed class Tilemap(
@@ -42,6 +64,7 @@ sealed class Tilemap(
     val rows = 0 until numRows
 
     val mapRect = MapRect(Coordinates(0, 0), numCols, numRows)
+    var lastVisionRect: MapRect? = null
 
     private var _tiles: MutableList<MutableList<Tile>> = initTiles(initTileType)
     fun tiles(): List<List<Tile>> = _tiles
@@ -55,15 +78,16 @@ sealed class Tilemap(
         actor: Actor,
         fullMapPass: Boolean = false
     ) {
-        val range = when (fullMapPass) {
-            true -> mapRect
-            false -> if (_parentSimulation.debugMode) mapRect else actor.visionRange()
-        }
-        mapTiles(mapRect = range) { tile ->
+        val newVisionRect =
+           if (fullMapPass || _parentSimulation.debugMode) mapRect else actor.visionRange()
+        val overlappingVisionRect =
+            if (lastVisionRect == null) newVisionRect else newVisionRect.plus(lastVisionRect!!)
+        mapTiles (mapRect = overlappingVisionRect) { tile ->
             if (_parentSimulation.debugMode) tile.seen()
             else if (actor.canSeeTile(tile, _parentSimulation)) tile.seen()
             else tile.unSeen()
         }
+        lastVisionRect = newVisionRect
     }
 
     private fun isEdgeCoordinate(coordinates: Coordinates): Boolean {
