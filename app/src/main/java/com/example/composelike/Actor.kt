@@ -10,6 +10,19 @@ enum class ActorFaction {
     // more to come
 }
 
+@RequiresApi(Build.VERSION_CODES.N)
+fun spawnActor(
+    actorName: String,
+    coordinates: Coordinates
+): Actor {
+    return when (actorName) {
+        "@Player" -> Actor.Player(coordinates)
+        "Goblin" -> Actor.Goblin(coordinates)
+        "Snake" -> Actor.Snake(coordinates)
+        else -> error("This should never happen")
+    }
+}
+
 sealed class Actor(
     var coordinates: Coordinates,
     val name: String,
@@ -42,7 +55,7 @@ sealed class Actor(
 
     fun inVisionRange(
         target: Coordinates,
-        circularVision: Boolean = true
+        circularVision: Boolean = false
     ): Boolean {
         val distanceToTarget =
             if (circularVision) target.euclideanDistance(coordinates)

@@ -24,6 +24,7 @@ data class Coordinates(val x: Int, val y: Int) {
     fun euclideanDistance(other: Coordinates): Int {
         return kotlin.math.sqrt(
             ((other.x - x).toDouble().pow(2) + (other.y - y).toDouble().pow(2))
+            // TODO: ^ This can be optimized.
         ).toInt()
     }
 
@@ -64,8 +65,7 @@ data class Coordinates(val x: Int, val y: Int) {
     }
 
     /**
-     * Returns all neighbor coordinates that exist within the simulation (no out of bounds
-     * coordinates).
+     * Returns all neighbor coordinates that exist within the given bounds.
      */
     private fun neighbors(xBound: Int, yBound: Int): List<Coordinates> {
         return allMovementDirections

@@ -90,8 +90,10 @@ class ActorContainer {
     }
 
     fun updateActorBehavior(simulation: ComposelikeSimulation) {
-        for (actor in _actors) {
-            actor.behavior?.run { this.effect(actor, simulation) }
+        _actors.forEach { actor ->
+            actor.behavior?.let { action ->
+                action.effect(actor, simulation)
+            }
         }
     }
 

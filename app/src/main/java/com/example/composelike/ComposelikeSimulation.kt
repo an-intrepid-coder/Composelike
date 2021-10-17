@@ -4,11 +4,6 @@ import android.os.Build
 import androidx.annotation.RequiresApi
 
 class ComposelikeSimulation {
-    // TODO: Refactoring: Long-Term: This has become something of a catch-all class and is verging
-    //  on being an anti-pattern. It makes sense as a catch-all class, but there's probably
-    //  a better way to organize it; for example, by attaching a reference to the simulation
-    //  to the classes which must interact with it rather than just passing the reference
-    //  around all the time.
     // TODO: Optimization: Long-Term: There's more research to do regarding concurrency and
     //  best practices. I may be able to take advantage of concurrency for more things in a
     //  better way.
@@ -137,50 +132,59 @@ class ComposelikeSimulation {
     }
 
     /**
-     * For now, generates a goblin for every 30 walkable tiles. Tentative.
+     * Given a valid actorName and either a population frequency or an absolute population number,
+     * spawnPopulation() will populate the map with the given type of Actor. If an absoluteNumber
+     * is given then it overrides the populationFrequency's value, but populationFrequency must
+     * be given either way.
      */
-    private fun generateSmallGoblinPopulation() {
-        val numGoblins = (tilemap?.flattenedTiles()?.filter { it.walkable }?.size ?: 1000) / 30
-        repeat (numGoblins) {
-            validSpawnCoordinates()?.let {
-                if (it.isNotEmpty()) actors.addActor(Actor.Goblin(it.random()))
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun spawnPopulation(
+        actorName: String,
+        populationFrequency: Int,
+        absoluteNumber: Int? = null
+    ) {
+        val validActorNames = listOf(
+            // This will grow
+            "@Player", "Goblin", "Snake"
+        )
+
+        if (validActorNames.contains(actorName)) {
+            validSpawnCoordinates()?.let { validCoordinates ->
+                val shuffledCoordinates = validCoordinates.shuffled().toMutableList()
+                val numActors = absoluteNumber ?: shuffledCoordinates.size / populationFrequency
+                repeat (numActors) {
+                    if (shuffledCoordinates.isNotEmpty()) {
+                        val nextSpawnPoint = shuffledCoordinates.removeFirst()
+                        actors.addActor(spawnActor(actorName, nextSpawnPoint))
+                    }
+                }
             }
         }
     }
 
-    /**
-     * Generates the desired number of Snakes. Each snake uses the HuntingEnemy Behavior, which
-     * runs an A* path to the player every turn. Barring further optimization, only a few dozen
-     * of these should exist at once. Current optimization level can handle about 50 without
-     * causing much lag.
-     */
     @RequiresApi(Build.VERSION_CODES.N)
-    private fun generateSnakes(numSnakes: Int) {
-        repeat (numSnakes) {
-            validSpawnCoordinates()?.let {
-                if (it.isNotEmpty()) actors.addActor(Actor.Snake(it.random()))
-            }
-        }
-    }
-
-    private fun spawnPlayer(): Actor.Player? {
-        validSpawnCoordinates()?.let {
-            val player = Actor.Player(it.random())
-            if (it.isNotEmpty()) actors.addActor(player)
-            return player
-        }
-        return null
-    }
-
-    @RequiresApi(Build.VERSION_CODES.N)
+    // Currently this is a placeholder test scenario:
     fun initSimulation() {
-        // Currently this is a placeholder test scenario:
         tilemap = Tilemap.ClassicDungeon(parentSimulation = this)
 
-        generateSnakes(2)
-        generateSmallGoblinPopulation()
+        spawnPopulation(
+            actorName = "Snake",
+            populationFrequency = 0,
+            absoluteNumber = 2
+        )
 
-        spawnPlayer()?.let { player ->
+        spawnPopulation(
+            actorName = "Goblin",
+            populationFrequency = 30
+        )
+
+        spawnPopulation(
+            actorName = "@Player",
+            populationFrequency = 0,
+            absoluteNumber = 1
+        )
+
+        actors.getPlayer().let { player ->
             tilemap?.setFieldOfView(player)
             _camera.snapTo(player.coordinates)
         }
