@@ -1,4 +1,7 @@
-#Composelike
+# Composelike
+#### Roguelike for Android
+
+![Gameplay Image](githubImages/gameplayImage_20211016.png)
 
 **Description:** This is my latest attempt at a hobby Roguelike for Android. It uses the Jetpack Compose framework and is a work in progress. It is in the very earliest stages of prototyping but is far enough along to play with and share. It's a work in progress and this repo will grow rapidly.
 
