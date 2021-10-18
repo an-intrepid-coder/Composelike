@@ -1,11 +1,14 @@
 package com.example.composelike
 
+import android.os.Build
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.*
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
+@RequiresApi(Build.VERSION_CODES.N)
 @Composable
 fun ComposelikeApp() {
 

@@ -1,6 +1,7 @@
 package com.example.composelike
 
 import android.os.Build
+import android.util.Log
 import androidx.annotation.RequiresApi
 
 sealed class Behavior(
@@ -43,27 +44,15 @@ sealed class Behavior(
         effect = { actor, simulation ->
             val playerLocation = simulation.actors.getPlayer().coordinates
 
-            val pathToPlayer = actor.coordinates.shortestPathTo(
+            val pathToPlayer = AStarPath.DirectActor(
+                start = actor.coordinates,
                 goal = playerLocation,
-                xBound = simulation.tilemap!!.numCols,
-                yBound = simulation.tilemap!!.numRows,
+                bounds = Bounds(simulation.tilemap!!.numCols, simulation.tilemap!!.numRows),
                 actor = actor,
-                simulation = simulation,
-                heuristicFunction = { node, actor, simulation ->
-                    val scoreDefault = Int.MAX_VALUE / 2
-                    val targetTile = simulation?.tilemap?.getTileOrNull(node)
-                    val walkable = targetTile?.walkable
-                    val occupiedByFriendly = targetTile?.let {
-                        simulation.actors.getActorByCoordinates(targetTile.coordinates)?.let {
-                            it.actorFaction == actor?.actorFaction
-                        }
-                    }
+                simulation = simulation
+            ).path
 
-                    if (walkable == true && occupiedByFriendly != true)
-                        node.chebyshevDistance(playerLocation)
-                    else scoreDefault
-                }
-            )
+            //Log.d("dbg", "pathToPlayer = $pathToPlayer")
 
             if (pathToPlayer.isNullOrEmpty()) Unit
             else if (pathToPlayer.size < 2) Unit

@@ -248,12 +248,14 @@ sealed class Tilemap(
      * It will default to "stamping" rooms in a grid-like manner for now, but eventually it will
      * do more interesting things.
      */
-    fun withStampedRoomsGrid(
+    fun withStampedRooms(
+        // TODO: Different room shapes.
         roomShape: String = "rectangular",
+        // TODO: Different room arrangements.
+        roomArrangement: String = "grid",
         roomSizeRange: IntRange = 4..6,
         roomSpacing: IntRange = 3..9
     ): List<Coordinates> {
-        // TODO: Different room shapes.
         val nodesList = mutableListOf<Coordinates>()
         var roomsStamped = 0
         var currentRoomTopLeft = Coordinates(1, 1)
@@ -331,35 +333,10 @@ sealed class Tilemap(
      * logic in order to connect the nodes in a neat way.
      */
     @RequiresApi(Build.VERSION_CODES.N)
-    fun withConnectedRooms(nodesList: List<Coordinates>) {
-        // TODO: This was a placeholder draft. Time to make real halls.
-
-        val shuffledNodes = nodesList.shuffled() as MutableList<Coordinates>
-        val hallTiles = mutableListOf<Tile>()
-        var previous = shuffledNodes.removeFirst()
-
-        while (shuffledNodes.isNotEmpty()) {
-            shuffledNodes.removeFirstOrNull()?.let { node ->
-                node.shortestPathTo(
-                    goal = previous,
-                    xBound = numCols,
-                    yBound = numRows,
-                    simulation = _parentSimulation,
-                    heuristicFunction = { node, _, _ ->
-                        node.euclideanDistance(previous)
-                    }
-                )?.let { path ->
-                    path.forEach { coordinates ->
-                        getTileOrNull(coordinates)?.let { tile ->
-                            if (tile.name == "Wall Tile")
-                                hallTiles.add(Tile.Floor(coordinates))
-                        }
-                    }
-                }
-                previous = node
-            }
+    fun withConnectedStampedRooms() {
+        withStampedRooms().let { roomNodes ->
+            // TODO: Real draft.
         }
-        insertTiles(hallTiles)
     }
 
     /**
@@ -397,10 +374,7 @@ sealed class Tilemap(
                 look feasible at this point. Excellent stuff!
          */
         init {
-            withConnectedRooms(withStampedRoomsGrid())
-            // TODO: Refinement: ^ These two functions are in the early stages and should become
-            //  much more complex and interesting soon.
-
+            withConnectedStampedRooms() // <-- In progress.
             withEdgeWalls()
             withRandomStairsDown()
         }

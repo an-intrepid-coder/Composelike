@@ -55,12 +55,8 @@ sealed class Actor(
 
     fun inVisionRange(
         target: Coordinates,
-        circularVision: Boolean = false
     ): Boolean {
-        val distanceToTarget =
-            if (circularVision) target.euclideanDistance(coordinates)
-            else target.chebyshevDistance(coordinates)
-        return distanceToTarget <= visionDistance
+        return coordinates.chebyshevDistance(target) <= visionDistance
     }
 
     fun visionRange(): MapRect {

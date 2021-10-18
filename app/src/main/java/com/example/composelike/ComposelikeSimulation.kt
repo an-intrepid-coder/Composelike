@@ -15,7 +15,7 @@ class ComposelikeSimulation {
     val actors = ActorContainer()
     val messageLog = MessageLog()
 
-    val debugMode = false //true
+    val debugMode = false
 
     // TODO: A HudStrings class.
     fun exportHudStrings(): Map<String, String> {
@@ -165,8 +165,9 @@ class ComposelikeSimulation {
     @RequiresApi(Build.VERSION_CODES.N)
     // Currently this is a placeholder test scenario:
     fun initSimulation() {
-        tilemap = Tilemap.ClassicDungeon(parentSimulation = this)
+        tilemap = Tilemap.Testing(parentSimulation = this)
 
+        /*
         spawnPopulation(
             actorName = "Snake",
             populationFrequency = 0,
@@ -177,6 +178,7 @@ class ComposelikeSimulation {
             actorName = "Goblin",
             populationFrequency = 30
         )
+        */
 
         spawnPopulation(
             actorName = "@Player",
