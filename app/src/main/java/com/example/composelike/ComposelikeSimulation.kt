@@ -165,9 +165,8 @@ class ComposelikeSimulation {
     @RequiresApi(Build.VERSION_CODES.N)
     // Currently this is a placeholder test scenario:
     fun initSimulation() {
-        tilemap = Tilemap.Testing(parentSimulation = this)
+        tilemap = Tilemap.ClassicDungeon(parentSimulation = this)
 
-        /*
         spawnPopulation(
             actorName = "Snake",
             populationFrequency = 0,
@@ -178,7 +177,6 @@ class ComposelikeSimulation {
             actorName = "Goblin",
             populationFrequency = 30
         )
-        */
 
         spawnPopulation(
             actorName = "@Player",

@@ -2,51 +2,8 @@ package com.example.composelike
 
 import android.os.Build
 import androidx.annotation.RequiresApi
-import java.lang.Math.min
 
 const val dimensionCap = 80
-
-data class MapRect(val origin: Coordinates, val width: Int, val height: Int) {
-    val cols = origin.x until (origin.x + width)
-    val rows = origin.y until (origin.y + height)
-
-    fun asCoordinates(): List<Coordinates> {
-        var coordinatesList = listOf(origin)
-        rows.forEach { row ->
-            cols.forEach { col ->
-                coordinatesList = coordinatesList.plus(
-                    Coordinates(origin.x + col, origin.y + row)
-                )
-            }
-        }
-        return coordinatesList
-    }
-
-    fun contains(coordinates: Coordinates): Boolean {
-        return asCoordinates().contains(coordinates)
-    }
-
-    fun plus(other: MapRect): MapRect {
-        return asCoordinates()
-            .plus(other.asCoordinates())
-            .let { allCoordinates ->
-            MapRect(
-                origin = Coordinates(
-                    x = min(origin.x, other.origin.x),
-                    y = min(origin.y, other.origin.y)
-                ),
-                width = allCoordinates
-                    .map { it.x }
-                    .maxOrNull()!!
-                    .minus(origin.x),
-                height = allCoordinates
-                    .map { it.y }
-                    .maxOrNull()!!
-                    .minus(origin.y)
-            )
-        }
-    }
-}
 
 sealed class Tilemap(
     initCols: Int,
@@ -205,6 +162,7 @@ sealed class Tilemap(
 
     /**
      * A cave-like map made with a Cellular Automata.
+     * This one is a work in progress.
      */
     class Cave(
         cols: Int = dimensionCap,
@@ -244,104 +202,115 @@ sealed class Tilemap(
     }
 
     /**
-     * This function assumes that the Tilemap has been initialized to all or mostly Wall tiles.
-     * It will default to "stamping" rooms in a grid-like manner for now, but eventually it will
-     * do more interesting things.
+     * Connects rooms together after stamping them into a blank map of Wall tiles.
+     * This one is a work in progress.
      */
-    fun withStampedRooms(
+    @RequiresApi(Build.VERSION_CODES.N)
+    fun withConnectedStampedRooms(
+        /*
+            connectionStyle recipe notes:
+                "random" -> a webby approach that carves out a cave-like interior with many
+                    surrounding rooms left intact on the perimeter.
+         */
+        // TODO: Different connection styles.
+        connectionStyle: String = "random",
         // TODO: Different room shapes.
         roomShape: String = "rectangular",
-        // TODO: Different room arrangements.
-        roomArrangement: String = "grid",
         roomSizeRange: IntRange = 4..6,
-        roomSpacing: IntRange = 3..9
-    ): List<Coordinates> {
-        val nodesList = mutableListOf<Coordinates>()
-        var roomsStamped = 0
-        var currentRoomTopLeft = Coordinates(1, 1)
-        var currentRoomWidth = roomSizeRange.random()
-        var currentRoomHeight = roomSizeRange.random()
-        val roomTiles = mutableListOf<Tile>()
+        roomSpacingRange: IntRange = 3..9,
+        // TODO: Different room arrangements.
+        roomArrangement: String = "scattered grid",
+    ) {
+        fun withStampedRooms(): List<Coordinates> {
+            val nodesList = mutableListOf<Coordinates>()
+            var roomsStamped = 0
+            var currentRoomTopLeft = Coordinates(1, 1)
+            var currentRoomWidth = roomSizeRange.random()
+            var currentRoomHeight = roomSizeRange.random()
+            val roomTiles = mutableListOf<Tile>()
 
-        fun stamping(): Boolean {
-            return currentRoomTopLeft.y + roomSizeRange.last + 1 < numRows - 1
+            fun stamping(): Boolean {
+                return currentRoomTopLeft.y + roomSizeRange.last + 1 < numRows - 1
+            }
+
+            fun stampRoom() {
+                repeat (currentRoomHeight) { row ->
+                    repeat (currentRoomWidth) { col ->
+                        roomTiles.add(
+                            Tile.Room(
+                                Coordinates(
+                                    x = currentRoomTopLeft.x + col,
+                                    y = currentRoomTopLeft.y + row
+                                ),
+                                roomsStamped
+                            )
+                        )
+                    }
+                }
+            }
+
+            fun addNode() {
+                nodesList.add(
+                    Coordinates(
+                        x = currentRoomTopLeft.x + currentRoomWidth / 2,
+                        y = currentRoomTopLeft.y + currentRoomHeight / 2
+                    )
+                )
+            }
+
+            fun setupNextRoom() {
+                roomsStamped++
+                val newRoomWidth = roomSizeRange.random()
+                val newRoomHeight = roomSizeRange.random()
+                val spacing = roomSpacingRange.random()
+                var nextTopLeft = Coordinates(
+                    x = if (currentRoomTopLeft.x + currentRoomWidth + spacing + newRoomWidth < numCols - 1)
+                        currentRoomTopLeft.x + currentRoomWidth + spacing
+                    else 1,
+                    y = currentRoomTopLeft.y
+                )
+
+                if (nextTopLeft.x < currentRoomTopLeft.x) {
+                    nextTopLeft = Coordinates(
+                        x = nextTopLeft.x,
+                        y = nextTopLeft.y + roomSizeRange.last + 1
+                    )
+                }
+
+                currentRoomTopLeft = nextTopLeft
+                currentRoomHeight = newRoomHeight
+                currentRoomWidth = newRoomWidth
+            }
+
+            while (stamping()) {
+                stampRoom()
+                addNode()
+                setupNextRoom()
+            }
+
+            insertTiles(roomTiles)
+
+            return nodesList
         }
 
-        fun stampRoom() {
-            repeat (currentRoomHeight) { row ->
-                repeat (currentRoomWidth) { col ->
-                    roomTiles.add(
-                        Tile.Room(
-                            Coordinates(
-                                x = currentRoomTopLeft.x + col,
-                                y = currentRoomTopLeft.y + row
-                            ),
-                            roomsStamped
-                        )
-                    )
+        val newHallTiles = mutableListOf<Tile>()
+        withStampedRooms().let { roomNodes ->
+            AStarPath.DirectSequence(
+                waypoints = roomNodes.shuffled(),
+                bounds = mapRect.asBounds()
+            ).path?.forEach { coordinates ->
+                getTileOrNull(coordinates)?.let { tile ->
+                    if (tile.name == "Wall Tile") newHallTiles.add(Tile.Floor(coordinates))
                 }
             }
         }
-
-        fun addNode() {
-            nodesList.add(
-                Coordinates(
-                    x = currentRoomTopLeft.x + currentRoomWidth / 2,
-                    y = currentRoomTopLeft.y + currentRoomHeight / 2
-                )
-            )
-        }
-
-        fun setupNextRoom() {
-            roomsStamped++
-            val newRoomWidth = roomSizeRange.random()
-            val newRoomHeight = roomSizeRange.random()
-            val spacing = roomSpacing.random()
-            var nextTopLeft = Coordinates(
-                x = if (currentRoomTopLeft.x + currentRoomWidth + spacing + newRoomWidth < numCols - 1)
-                    currentRoomTopLeft.x + currentRoomWidth + spacing
-                else 1,
-                y = currentRoomTopLeft.y
-            )
-
-            if (nextTopLeft.x < currentRoomTopLeft.x) {
-                nextTopLeft = Coordinates(
-                    x = nextTopLeft.x,
-                    y = nextTopLeft.y + roomSizeRange.last + 1
-                )
-            }
-
-            currentRoomTopLeft = nextTopLeft
-            currentRoomHeight = newRoomHeight
-            currentRoomWidth = newRoomWidth
-        }
-
-        while (stamping()) {
-            stampRoom()
-            addNode()
-            setupNextRoom()
-        }
-
-        insertTiles(roomTiles)
-
-        return nodesList
-    }
-
-    /**
-     * Runs a series of A* paths between the nodes in the nodesList and carves out hallways.
-     * Will not override Room Tiles. Will use waypoints and as-yet-undetermined fuzziness and
-     * logic in order to connect the nodes in a neat way.
-     */
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun withConnectedStampedRooms() {
-        withStampedRooms().let { roomNodes ->
-            // TODO: Real draft.
-        }
+        insertTiles(newHallTiles)
     }
 
     /**
      * Will be a simple "rectangular rooms and twisty hallways" dungeon, with elements reminiscent
      * of traditional Roguelikes.
+     * This one is a work in progress.
      */
     @RequiresApi(Build.VERSION_CODES.N)
     class ClassicDungeon(
@@ -349,19 +318,8 @@ sealed class Tilemap(
         rows: Int = dimensionCap,
         parentSimulation: ComposelikeSimulation
     ) : Tilemap(cols, rows, parentSimulation, "wall") {
-        /*
-            pcode:
-                1. Place rooms by row in grid-like arrangement, perhaps using a re-usable
-                    room-stamping function (as this is far from the only map type which will
-                    use it).
-                    1a. At the center (roughly) of each Room, place a node in a nodesList of
-                        some kind.
-
-                2. Connect all the nodes in the nodesList. It could be randomly, it could be
-                    according to some logic, and waypoints can be injected in to an A* path to
-                    create sensible hallways that still curve in a natural way.
-
-            Extras:
+        /* TODO: In progress.
+            Next Up:
                 1. It would be a good time to implement a Door tile.
                 2. It would be a good time to implement Event Triggers.
                 3. The combination of 1 + 2 means that I could cause rooms to "light up" in the
@@ -369,9 +327,6 @@ sealed class Tilemap(
                 4. Secret doors, secret hallways, and some rooms replaced with "Mazes" -- all
                     features of the original Rogue that would be missing from an homage map.
                 5. It would be a good time to look in to a BSP implementation.
-
-            Status: Rough draft complete. Most of the Extras remain to be tackled, but all
-                look feasible at this point. Excellent stuff!
          */
         init {
             withConnectedStampedRooms() // <-- In progress.

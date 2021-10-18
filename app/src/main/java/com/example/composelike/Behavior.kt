@@ -1,7 +1,6 @@
 package com.example.composelike
 
 import android.os.Build
-import android.util.Log
 import androidx.annotation.RequiresApi
 
 sealed class Behavior(
@@ -51,8 +50,6 @@ sealed class Behavior(
                 actor = actor,
                 simulation = simulation
             ).path
-
-            //Log.d("dbg", "pathToPlayer = $pathToPlayer")
 
             if (pathToPlayer.isNullOrEmpty()) Unit
             else if (pathToPlayer.size < 2) Unit

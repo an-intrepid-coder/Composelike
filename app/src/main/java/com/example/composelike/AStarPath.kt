@@ -22,7 +22,8 @@ const val scoreDefault = Int.MAX_VALUE / 2
 sealed class AStarPath(
     waypoints: List<Coordinates>,
     bounds: Bounds,
-    heuristicFunction: (Coordinates, Actor?, ComposelikeSimulation?) -> Int,
+    heuristicFunction: (Coordinates, Coordinates, Actor?, ComposelikeSimulation?) -> Int =
+        { node, goal, _, _ -> node.chebyshevDistance(goal) },
     actor: Actor? = null,
     simulation: ComposelikeSimulation? = null,
 ) {
@@ -92,7 +93,7 @@ sealed class AStarPath(
                     if (tentativeGScore < gScoreNode) {
                         cameFrom[node] = currentNode
                         gScore[node] = tentativeGScore
-                        val hScore = heuristicFunction(node, actor, simulation)
+                        val hScore = heuristicFunction(node, nextWaypoint!!, actor, simulation)
                         fScore[node] = gScore[node]!! + hScore
                         if (node !in openSet && hScore < scoreDefault) openSet.add(node)
                     }
@@ -119,7 +120,14 @@ sealed class AStarPath(
     ) : AStarPath(
         waypoints = listOf(start, goal),
         bounds = bounds,
-        heuristicFunction = { node, _, _ -> node.chebyshevDistance(goal) }
+    )
+
+    class DirectSequence(
+        waypoints: List<Coordinates>,
+        bounds: Bounds,
+    ) : AStarPath(
+        waypoints = waypoints,
+        bounds = bounds,
     )
 
     class DirectActor(
@@ -131,8 +139,7 @@ sealed class AStarPath(
     ) : AStarPath(
         waypoints = listOf(start, goal),
         bounds = bounds,
-        heuristicFunction = { node, actor, simulation ->
-            val scoreDefault = Int.MAX_VALUE / 2
+        heuristicFunction = { node, goal, actor, simulation ->
             val targetTile = simulation?.tilemap?.getTileOrNull(node)
             val walkable = targetTile?.walkable
             val occupiedByFriendly = targetTile?.let {
