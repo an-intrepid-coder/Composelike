@@ -1,7 +1,16 @@
 package com.example.composelike
 
+enum class TileType {
+    WALL,
+    FLOOR,
+    ROOM,
+    DOOR,
+    STAIRS_UP,
+    STAIRS_DOWN,
+}
+
 sealed class Tile(
-    val name: String,
+    val tileType: TileType,
     val coordinates: Coordinates,
     private val _mapRepresentation: String,
     val walkable: Boolean = true,
@@ -9,8 +18,8 @@ sealed class Tile(
     var visible: Boolean = false,
     val blocksSightLine: Boolean = false,
     val roomNumber: Int? = null
+    // TODO: Player's scent trail.
     ) {
-    // TODO: Perhaps a variable to track the player's "trail", for some hunting monsters to follow.
 
     fun isNeighbor(other: Tile): Boolean { return coordinates.isNeighbor(other.coordinates) }
 
@@ -32,7 +41,7 @@ sealed class Tile(
     }
 
     class Wall(coordinates: Coordinates) : Tile(
-        name = "Wall Tile",
+        tileType = TileType.WALL,
         coordinates = coordinates,
         _mapRepresentation = "#",
         walkable = false,
@@ -40,7 +49,7 @@ sealed class Tile(
     )
 
     class Floor(coordinates: Coordinates) : Tile(
-        name = "Floor Tile",
+        tileType = TileType.FLOOR,
         coordinates = coordinates,
         _mapRepresentation = " ."
     ) {
@@ -54,7 +63,7 @@ sealed class Tile(
      * as groups during map generation and (eventually) during event triggers.
      */
     class Room(coordinates: Coordinates, roomNumber: Int) : Tile(
-        name = "Room Tile",
+        tileType = TileType.ROOM,
         coordinates = coordinates,
         _mapRepresentation = " .",
         roomNumber = roomNumber
@@ -65,7 +74,7 @@ sealed class Tile(
     }
 
     class Door(coordinates: Coordinates) : Tile(
-        name = "Door Tile",
+        tileType = TileType.DOOR,
         coordinates = coordinates,
         _mapRepresentation = "+." // <-- Not positive this will be ideal yet.
         // TODO: Questions on how to make this interact with FOV in the best way. Probably
@@ -75,13 +84,13 @@ sealed class Tile(
     )
 
     class StairsUp(coordinates: Coordinates) : Tile(
-        name = "Stairs Up",
+        tileType = TileType.STAIRS_UP,
         coordinates = coordinates,
         _mapRepresentation = "<"
     )
 
     class StairsDown(coordinates: Coordinates) : Tile(
-        name = "Stairs Down",
+        tileType = TileType.STAIRS_DOWN,
         coordinates = coordinates,
         _mapRepresentation = ">"
     )

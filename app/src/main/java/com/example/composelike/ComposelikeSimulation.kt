@@ -139,24 +139,17 @@ class ComposelikeSimulation {
      */
     @RequiresApi(Build.VERSION_CODES.N)
     fun spawnPopulation(
-        actorName: String,
+        actorType: ActorType,
         populationFrequency: Int,
         absoluteNumber: Int? = null
     ) {
-        val validActorNames = listOf(
-            // This will grow
-            "@Player", "Goblin", "Snake"
-        )
-
-        if (validActorNames.contains(actorName)) {
-            validSpawnCoordinates()?.let { validCoordinates ->
-                val shuffledCoordinates = validCoordinates.shuffled().toMutableList()
-                val numActors = absoluteNumber ?: shuffledCoordinates.size / populationFrequency
-                repeat (numActors) {
-                    if (shuffledCoordinates.isNotEmpty()) {
-                        val nextSpawnPoint = shuffledCoordinates.removeFirst()
-                        actors.addActor(spawnActor(actorName, nextSpawnPoint, this))
-                    }
+        validSpawnCoordinates()?.let { validCoordinates ->
+            val shuffledCoordinates = validCoordinates.shuffled().toMutableList()
+            val numActors = absoluteNumber ?: shuffledCoordinates.size / populationFrequency
+            repeat (numActors) {
+                if (shuffledCoordinates.isNotEmpty()) {
+                    val nextSpawnPoint = shuffledCoordinates.removeFirst()
+                    actors.addActor(spawnActor(actorType, nextSpawnPoint, this))
                 }
             }
         }
@@ -168,18 +161,13 @@ class ComposelikeSimulation {
         tilemap = Tilemap.ClassicDungeon(parentSimulation = this)
 
         spawnPopulation(
-            actorName = "Snake",
+            actorType = ActorType.ALLIGATOR,
             populationFrequency = 0,
-            absoluteNumber = 2
+            absoluteNumber = 30,
         )
 
         spawnPopulation(
-            actorName = "Goblin",
-            populationFrequency = 30
-        )
-
-        spawnPopulation(
-            actorName = "@Player",
+            actorType = ActorType.PLAYER,
             populationFrequency = 0,
             absoluteNumber = 1
         )

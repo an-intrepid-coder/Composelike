@@ -300,7 +300,7 @@ sealed class Tilemap(
                 bounds = mapRect.asBounds()
             ).path?.forEach { coordinates ->
                 getTileOrNull(coordinates)?.let { tile ->
-                    if (tile.name == "Wall Tile") newHallTiles.add(Tile.Floor(coordinates))
+                    if (tile.tileType == TileType.WALL) newHallTiles.add(Tile.Floor(coordinates))
                 }
             }
         }

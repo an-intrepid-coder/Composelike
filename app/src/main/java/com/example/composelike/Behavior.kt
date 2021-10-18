@@ -65,6 +65,13 @@ sealed class Behavior(
      * The AmbushEnemy runs an A* path to the player in order to attack, if it can see them;
      * otherwise it remains stationary.
      */
+    /*
+        TODO: Currently the AmbushEnemy loses track of the player as soon as the player slips out of
+            sight. There are a few different ways to fix that (or a combination of them):
+                1. Have the player leave a scent trail.
+                2. Have each AmbushEnemy store a "last-seen" variable and move towards it when
+                    it loses sight.
+    */
     class AmbushEnemy : Behavior(
         effect = { actor, simulation ->
             val playerCoordinates = simulation.actors.getPlayer().coordinates

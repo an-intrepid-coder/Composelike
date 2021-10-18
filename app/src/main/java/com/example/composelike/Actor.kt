@@ -10,21 +10,29 @@ enum class ActorFaction {
     // more to come
 }
 
+enum class ActorType {
+    PLAYER,
+    GOBLIN,
+    SNAKE,
+    ALLIGATOR
+}
+
 @RequiresApi(Build.VERSION_CODES.N)
 fun spawnActor(
-    actorName: String,
+    actorType: ActorType,
     coordinates: Coordinates,
     parentSimulation: ComposelikeSimulation,
 ): Actor {
-    return when (actorName) {
-        "@Player" -> Actor.Player(coordinates, parentSimulation)
-        "Goblin" -> Actor.Goblin(coordinates, parentSimulation)
-        "Snake" -> Actor.Snake(coordinates, parentSimulation)
-        else -> error("This should never happen")
+    return when (actorType) {
+        ActorType.PLAYER -> Actor.Player(coordinates, parentSimulation)
+        ActorType.GOBLIN -> Actor.Goblin(coordinates, parentSimulation)
+        ActorType.SNAKE -> Actor.Snake(coordinates, parentSimulation)
+        ActorType.ALLIGATOR -> Actor.Alligator(coordinates, parentSimulation)
     }
 }
 
 sealed class Actor(
+    val actorType: ActorType,
     var coordinates: Coordinates,
     val name: String,
     val parentSimulation: ComposelikeSimulation,
@@ -134,6 +142,7 @@ sealed class Actor(
         coordinates: Coordinates,
         parentSimulation: ComposelikeSimulation,
     ) : Actor(
+        actorType = ActorType.PLAYER,
         coordinates = coordinates,
         name = "@Player",
         parentSimulation = parentSimulation,
@@ -149,6 +158,7 @@ sealed class Actor(
         coordinates: Coordinates,
         parentSimulation: ComposelikeSimulation,
     ) : Actor(
+        actorType = ActorType.GOBLIN,
         coordinates = coordinates,
         name = "Goblin",
         parentSimulation = parentSimulation,
@@ -163,6 +173,7 @@ sealed class Actor(
         coordinates: Coordinates,
         parentSimulation: ComposelikeSimulation,
     ) : Actor(
+        actorType = ActorType.SNAKE,
         coordinates = coordinates,
         name = "Snake",
         parentSimulation = parentSimulation,
@@ -170,5 +181,18 @@ sealed class Actor(
         maxHealth = 5,
         maxMana = 3, // TODO: Spells & Abilities
         behavior = Behavior.HuntingEnemy()
+    )
+
+    class Alligator(
+        coordinates: Coordinates,
+        parentSimulation: ComposelikeSimulation,
+    ) : Actor(
+        actorType = ActorType.ALLIGATOR,
+        coordinates = coordinates,
+        name = "Alligator",
+        parentSimulation = parentSimulation,
+        actorFaction = ActorFaction.ENEMY,
+        maxMana = 1, // TODO: Spells & Abilities
+        behavior = Behavior.AmbushEnemy()
     )
 }
