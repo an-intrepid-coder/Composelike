@@ -12,7 +12,7 @@ class ComposelikeSimulation {
     private var _dungeonLevel = 1
     private val _camera = Camera()
     var tilemap: Tilemap? = null
-    val actors = ActorContainer()
+    val actors = ActorContainer(this)
     val messageLog = MessageLog()
 
     val debugMode = false
@@ -111,7 +111,7 @@ class ComposelikeSimulation {
 
     fun nextTurnByPlayerMove(movementDirection: MovementDirection) {
         // For now, Player will always go first. For now.
-        actors.moveActor(actors.getPlayer(), movementDirection, this)
+        actors.moveActor(actors.getPlayer(), movementDirection)
         tilemap?.setFieldOfView(actors.getPlayer())
         actors.updateActorBehavior(this)
         _turnsPassed++
@@ -155,7 +155,7 @@ class ComposelikeSimulation {
                 repeat (numActors) {
                     if (shuffledCoordinates.isNotEmpty()) {
                         val nextSpawnPoint = shuffledCoordinates.removeFirst()
-                        actors.addActor(spawnActor(actorName, nextSpawnPoint))
+                        actors.addActor(spawnActor(actorName, nextSpawnPoint, this))
                     }
                 }
             }

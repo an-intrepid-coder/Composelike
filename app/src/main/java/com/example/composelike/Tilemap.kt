@@ -41,7 +41,7 @@ sealed class Tilemap(
             if (lastVisionRect == null) newVisionRect else newVisionRect.plus(lastVisionRect!!)
         mapTiles (mapRect = overlappingVisionRect) { tile ->
             if (_parentSimulation.debugMode) tile.seen()
-            else if (actor.canSeeTile(tile, _parentSimulation)) tile.seen()
+            else if (actor.canSeeTile(tile)) tile.seen()
             else tile.unSeen()
         }
         lastVisionRect = newVisionRect

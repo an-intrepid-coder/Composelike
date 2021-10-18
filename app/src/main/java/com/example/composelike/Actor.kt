@@ -13,12 +13,13 @@ enum class ActorFaction {
 @RequiresApi(Build.VERSION_CODES.N)
 fun spawnActor(
     actorName: String,
-    coordinates: Coordinates
+    coordinates: Coordinates,
+    parentSimulation: ComposelikeSimulation,
 ): Actor {
     return when (actorName) {
-        "@Player" -> Actor.Player(coordinates)
-        "Goblin" -> Actor.Goblin(coordinates)
-        "Snake" -> Actor.Snake(coordinates)
+        "@Player" -> Actor.Player(coordinates, parentSimulation)
+        "Goblin" -> Actor.Goblin(coordinates, parentSimulation)
+        "Snake" -> Actor.Snake(coordinates, parentSimulation)
         else -> error("This should never happen")
     }
 }
@@ -26,6 +27,7 @@ fun spawnActor(
 sealed class Actor(
     var coordinates: Coordinates,
     val name: String,
+    val parentSimulation: ComposelikeSimulation,
     val actorFaction: ActorFaction = ActorFaction.NEUTRAL,
     var maxHealth: Int = 8,
     var maxMana: Int = 3,
@@ -70,11 +72,11 @@ sealed class Actor(
         )
     }
 
-    fun canSeeTile(tile: Tile, simulation: ComposelikeSimulation): Boolean {
-        simulation.tilemap?.let {
+    fun canSeeTile(tile: Tile): Boolean {
+        parentSimulation.tilemap?.let {
             val line = coordinates.bresenhamLine(tile.coordinates)
             return inVisionRange(tile.coordinates) &&
-                    simulation.tilemap!!.flattenedTiles()
+                    parentSimulation.tilemap!!.flattenedTiles()
                         .asSequence()
                         .filter { line.contains(it.coordinates) }
                         .none { it.blocksSightLine }
@@ -128,9 +130,13 @@ sealed class Actor(
         return coordinates.isNeighbor(other.coordinates)
     }
 
-    class Player(coordinates: Coordinates) : Actor(
+    class Player(
+        coordinates: Coordinates,
+        parentSimulation: ComposelikeSimulation,
+    ) : Actor(
         coordinates = coordinates,
         name = "@Player",
+        parentSimulation = parentSimulation,
         actorFaction = ActorFaction.PLAYER,
         inventory = listOf(
             Item.HealingPotion(),
@@ -139,9 +145,13 @@ sealed class Actor(
         )
     )
 
-    class Goblin(coordinates: Coordinates) : Actor(
+    class Goblin(
+        coordinates: Coordinates,
+        parentSimulation: ComposelikeSimulation,
+    ) : Actor(
         coordinates = coordinates,
         name = "Goblin",
+        parentSimulation = parentSimulation,
         actorFaction = ActorFaction.ENEMY,
         maxHealth = 3,
         maxMana = 1, // TODO: Spells & Abilities
@@ -149,9 +159,13 @@ sealed class Actor(
     )
 
     @RequiresApi(Build.VERSION_CODES.N)
-    class Snake(coordinates: Coordinates) : Actor(
+    class Snake(
+        coordinates: Coordinates,
+        parentSimulation: ComposelikeSimulation,
+    ) : Actor(
         coordinates = coordinates,
         name = "Snake",
+        parentSimulation = parentSimulation,
         actorFaction = ActorFaction.ENEMY,
         maxHealth = 5,
         maxMana = 3, // TODO: Spells & Abilities

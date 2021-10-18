@@ -49,7 +49,8 @@ sealed class AStarPath(
                 temp = cameFrom[temp]!!
                 totalPath.add(temp)
             }
-            return totalPath.reversed() // <-- especially this part
+            return totalPath.reversed()
+            // TODO: ^ I may still be able to optimize this part.
         }
 
         if (waypoints.size < 2) error ("This should never happen")
