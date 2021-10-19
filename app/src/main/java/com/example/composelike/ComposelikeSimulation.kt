@@ -158,7 +158,7 @@ class ComposelikeSimulation {
     @RequiresApi(Build.VERSION_CODES.N)
     // Currently this is a placeholder test scenario:
     fun initSimulation() {
-        tilemap = Tilemap.ClassicDungeon(parentSimulation = this)
+        tilemap = Tilemap.CollapsedRuins(parentSimulation = this)
 
         spawnPopulation(
             actorType = ActorType.ALLIGATOR,

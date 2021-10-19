@@ -5,6 +5,17 @@ import androidx.annotation.RequiresApi
 
 const val dimensionCap = 80
 
+/* TODO: In progress.
+    Next Up:
+        1. It would be a good time to implement a Door tile.
+        2. It would be a good time to implement Event Triggers.
+        3. The combination of 1 + 2 means that I could cause rooms to "light up" in the
+            way of the traditional Rogue while maintaining a modern FOV style in general.
+        4. Secret doors, secret hallways, and some rooms replaced with "Mazes" -- all
+            features of the original Rogue that would be missing from an homage map.
+        5. It would be a good time to look in to a BSP implementation.
+ */
+
 sealed class Tilemap(
     initCols: Int,
     initRows: Int,
@@ -126,17 +137,6 @@ sealed class Tilemap(
     }
 
     /**
-     * A blank map with walls around the edges.
-     */
-    class Testing(
-        cols: Int = dimensionCap,
-        rows: Int = dimensionCap,
-        parentSimulation: ComposelikeSimulation
-    ) : Tilemap(cols, rows, parentSimulation, "floor") {
-        init { withEdgeWalls() }
-    }
-
-    /**
      * Will apply arbitrary Cellular Automata rules to the map for a given number of generations.
      * For now, it only considers Wall or Floor Tiles as potential states. Eventually it will
      * allow for more.
@@ -153,48 +153,6 @@ sealed class Tilemap(
         }
     }
 
-    /*
-        TODO: Conway's Game of Life map! It could run applyCellularAutomata for an arbitrary
-            number of setup generations and then yield the resulting Tilemap. Using an event trigger
-            system or something I could even cause it to advance generations in game! That's a
-            neat idea!
-     */
-
-    /**
-     * A cave-like map made with a Cellular Automata.
-     * This one is a work in progress.
-     */
-    class Cave(
-        cols: Int = dimensionCap,
-        rows: Int = dimensionCap,
-        parentSimulation: ComposelikeSimulation
-    ) : Tilemap(cols, rows, parentSimulation) {
-        init {
-            applyCellularAutomata(
-                /*
-                    Recipe Notes:
-                        - (generations = 3, neighborThreshold = 5) results in isolated cave "rooms"
-                          that will ideally be joined together by hallways.
-                        - (generations = 1, neighborThreshold = 4) results in large open rooms
-                          with a "cave"-like appearance. It's a good "basic" Cave.
-                        - More to come, for sure.
-                    TODO: Fine-tune with more parameters and possibly create sub-classes of Cave.
-                 */
-                generations = 1,
-                decisionFunction = { tile ->
-                    val neighborThreshold = 4
-                    tile.getNeighbors(flattenedTiles())
-                        // TODO: Test that this wouldn't be better as a Sequence.
-                        .filter { it.walkable }
-                        .size >= neighborThreshold
-                }
-            )
-            withEdgeWalls()
-            withRandomStairsDown()
-            // TODO: Contiguity check.
-        }
-    }
-
     private fun insertTiles(tiles: List<Tile>) {
         tiles.forEach { tile ->
             _tiles[tile.coordinates.y][tile.coordinates.x] = tile
@@ -203,7 +161,7 @@ sealed class Tilemap(
 
     /**
      * Connects rooms together after stamping them into a blank map of Wall tiles.
-     * This one is a work in progress.
+     * This one is a work in progress. It is generally inferior to room accretion.
      */
     @RequiresApi(Build.VERSION_CODES.N)
     fun withConnectedStampedRooms(
@@ -296,7 +254,10 @@ sealed class Tilemap(
         val newHallTiles = mutableListOf<Tile>()
         withStampedRooms().let { roomNodes ->
             AStarPath.DirectSequence(
-                waypoints = roomNodes.shuffled(),
+                waypoints = when (connectionStyle) {
+                    "random" ->  roomNodes.shuffled()
+                    else -> error ("Invalid connectionStyle: $connectionStyle")
+                },
                 bounds = mapRect.asBounds()
             ).path?.forEach { coordinates ->
                 getTileOrNull(coordinates)?.let { tile ->
@@ -308,28 +269,77 @@ sealed class Tilemap(
     }
 
     /**
-     * Will be a simple "rectangular rooms and twisty hallways" dungeon, with elements reminiscent
-     * of traditional Roguelikes.
+     * Generates a dungeon using room accretion, where each room is an offshoot of the previous.
+     */
+    fun withRoomAccretion() {
+        // TODO
+    }
+
+    /**
+     * A blank map with walls around the edges.
+     */
+    class Testing(
+        cols: Int = dimensionCap,
+        rows: Int = dimensionCap,
+        parentSimulation: ComposelikeSimulation
+    ) : Tilemap(cols, rows, parentSimulation, "floor") {
+        init { withEdgeWalls() }
+    }
+
+    /*
+        TODO: Conway's Game of Life map! It could run applyCellularAutomata for an arbitrary
+            number of setup generations and then yield the resulting Tilemap. Using an event trigger
+            system or something I could even cause it to advance generations in game! That's a
+            neat idea!
+     */
+
+    /**
+     * A cave-like map made with a Cellular Automata.
      * This one is a work in progress.
      */
+    class Cave(
+        cols: Int = dimensionCap,
+        rows: Int = dimensionCap,
+        parentSimulation: ComposelikeSimulation
+    ) : Tilemap(cols, rows, parentSimulation) {
+        init {
+            applyCellularAutomata(
+                /*
+                    Recipe Notes:
+                        - (generations = 3, neighborThreshold = 5) results in isolated cave "rooms"
+                          that will ideally be joined together by hallways.
+                        - (generations = 1, neighborThreshold = 4) results in large open rooms
+                          with a "cave"-like appearance. It's a good "basic" Cave.
+                        - More to come, for sure.
+                    TODO: Fine-tune with more parameters and possibly create sub-classes of Cave.
+                 */
+                generations = 1,
+                decisionFunction = { tile ->
+                    val neighborThreshold = 4
+                    tile.getNeighbors(flattenedTiles())
+                        // TODO: Test that this wouldn't be better as a Sequence.
+                        .filter { it.walkable }
+                        .size >= neighborThreshold
+                }
+            )
+            withEdgeWalls()
+            withRandomStairsDown()
+            // TODO: Contiguity check.
+        }
+    }
+
+    /**
+     * A "stamped" map with the center being collapsed and cave-like while the perimeter is
+     * more reminiscent of a traditional dungeon.
+     */
     @RequiresApi(Build.VERSION_CODES.N)
-    class ClassicDungeon(
+    class CollapsedRuins(
         cols: Int = dimensionCap,
         rows: Int = dimensionCap,
         parentSimulation: ComposelikeSimulation
     ) : Tilemap(cols, rows, parentSimulation, "wall") {
-        /* TODO: In progress.
-            Next Up:
-                1. It would be a good time to implement a Door tile.
-                2. It would be a good time to implement Event Triggers.
-                3. The combination of 1 + 2 means that I could cause rooms to "light up" in the
-                    way of the traditional Rogue while maintaining a modern FOV style in general.
-                4. Secret doors, secret hallways, and some rooms replaced with "Mazes" -- all
-                    features of the original Rogue that would be missing from an homage map.
-                5. It would be a good time to look in to a BSP implementation.
-         */
         init {
-            withConnectedStampedRooms() // <-- In progress.
+            withConnectedStampedRooms()
             withEdgeWalls()
             withRandomStairsDown()
         }
