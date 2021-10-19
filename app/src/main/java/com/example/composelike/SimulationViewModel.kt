@@ -67,11 +67,13 @@ class SimulationViewModel : ViewModel() {
 
     fun updateMapScreenStrings() {
         _simulation?.let { simulation ->
-            simulation.tilemap?.setFieldOfView(
-                actor = simulation.actors.getPlayer(),
-                fullMapPass = true
-            )
-            _mapScreenStrings.value = simulation.exportMapScreenStrings()
+            simulation.actors.getPlayer()?.let { player ->
+                simulation.tilemap?.setFieldOfView(
+                    actor = player,
+                    fullMapPass = true
+                )
+                _mapScreenStrings.value = simulation.exportMapScreenStrings()
+            }
         }
     }
 

@@ -18,14 +18,12 @@ class ComposelikeSimulation {
     val debugMode = false
 
     // TODO: A HudStrings class.
-    fun exportHudStrings(): Map<String, String> {
-        val player = actors.getPlayer()
-
-        fun xpProgressBar(): String {
+    fun exportHudStrings(): Map<String, String>? {
+        fun xpProgressBar(xpToLevel: Int): String {
             // TODO: This is a candidate for a more generic function at some point.
             val xpBar = "~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~".toMutableList()
             // This assumes it is always 1000xp between levels. Which it is. For now.
-            val xpPercentage = (1000 - player.experienceToLevel) / 1000.0 * 100.0
+            val xpPercentage = (1000 - xpToLevel) / 1000.0 * 100.0
             xpBar.forEachIndexed { index, char ->
                 val indexPercentage = index / xpBar.size.toDouble() * 100.0
                 xpBar[index] = if (indexPercentage < xpPercentage)
@@ -40,17 +38,19 @@ class ComposelikeSimulation {
                 .filter { it == '~' || it == '>' || it == '_'}
         }
 
-        return mapOf(
-            "hp" to "HP: " + player.health.toString() + "/" + player.maxHealth.toString(),
-            "mp" to "MP: " + player.mana.toString() + "/" + player.maxMana.toString(),
-            "bonusAttack" to "ATK: " + player.bonusAttack.toString(),
-            "bonusDefense" to "DEF: " + player.bonusDefense.toString(),
-            "gold" to "Gold: " + player.gold.toString(),
-            "playerLevel" to "PLVL: " + player.level.toString(),
-            "experienceToLevel" to "XP: " + xpProgressBar(),
-            "dungeonLevel" to "DLVL: $_dungeonLevel",
-            "turnsPassed" to "Turns: $_turnsPassed",
-        )
+        return actors.getPlayer()?.let { player ->
+            mapOf(
+                "hp" to "HP: " + player.health.toString() + "/" + player.maxHealth.toString(),
+                "mp" to "MP: " + player.mana.toString() + "/" + player.maxMana.toString(),
+                "bonusAttack" to "ATK: " + player.bonusAttack.toString(),
+                "bonusDefense" to "DEF: " + player.bonusDefense.toString(),
+                "gold" to "Gold: " + player.gold.toString(),
+                "playerLevel" to "PLVL: " + player.level.toString(),
+                "experienceToLevel" to "XP: ${xpProgressBar(player.experienceToLevel)}",
+                "dungeonLevel" to "DLVL: $_dungeonLevel",
+                "turnsPassed" to "Turns: $_turnsPassed",
+            )
+        }
     }
 
     private fun exportDisplayStrings(mapRect: MapRect): List<String>? {
@@ -111,11 +111,13 @@ class ComposelikeSimulation {
 
     fun nextTurnByPlayerMove(movementDirection: MovementDirection) {
         // For now, Player will always go first. For now.
-        actors.moveActor(actors.getPlayer(), movementDirection)
-        tilemap?.setFieldOfView(actors.getPlayer())
-        actors.updateActorBehavior(this)
-        _turnsPassed++
-        if (_camera.coupled()) { _camera.snapTo(actors.getPlayer().coordinates) }
+        actors.getPlayer()?.let { player ->
+            actors.moveActor(player, movementDirection)
+            tilemap?.setFieldOfView(player)
+            actors.updateActorBehavior(this)
+            _turnsPassed++
+            if (_camera.coupled()) { _camera.snapTo(player.coordinates) }
+        }
     }
 
     fun takeEffect(effect: (ComposelikeSimulation) -> Unit) { effect(this) }
@@ -172,7 +174,7 @@ class ComposelikeSimulation {
             absoluteNumber = 1
         )
 
-        actors.getPlayer().let { player ->
+        actors.getPlayer()?.let { player ->
             tilemap?.setFieldOfView(player)
             _camera.snapTo(player.coordinates)
         }

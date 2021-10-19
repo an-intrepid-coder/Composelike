@@ -1,7 +1,5 @@
 package com.example.composelike
 
-import kotlin.system.exitProcess
-
 class ActorContainer(
     val parentSimulation: ComposelikeSimulation
 ) {
@@ -18,12 +16,8 @@ class ActorContainer(
         return _actors.firstOrNull { it.coordinates == coordinates }
     }
 
-    fun getPlayer(): Actor {
-        val player = _actors.firstOrNull { it.actorFaction == ActorFaction.PLAYER }
-        if (player == null) exitProcess(0)
-        // TODO: On player defeat, save a high score to persistent storage and present the
-        //  player with game statistics and the option for a new game.
-        else return player
+    fun getPlayer(): Actor? {
+        return _actors.firstOrNull { it.actorFaction == ActorFaction.PLAYER }
     }
 
     fun actorsFight(

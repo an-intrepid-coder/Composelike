@@ -8,6 +8,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 
+// TODO: On player defeat, save a high score to persistent storage and present the
+//  player with game statistics and the option for a new game.
+
 @RequiresApi(Build.VERSION_CODES.N)
 @Composable
 fun ComposelikeApp() {

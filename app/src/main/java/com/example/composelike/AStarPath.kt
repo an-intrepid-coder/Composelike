@@ -53,7 +53,7 @@ sealed class AStarPath(
             // TODO: ^ I may still be able to optimize this part.
         }
 
-        if (waypoints.size < 2) error ("This should never happen")
+        if (waypoints.size < 2) error("Waypoint size < 2")
 
         val mutableWaypoints = waypoints.toMutableList()
         var currentWaypoint = mutableWaypoints.removeFirst()
@@ -132,6 +132,9 @@ sealed class AStarPath(
     )
 
     class DirectActor(
+        /*
+            TODO:
+         */
         start: Coordinates,
         goal: Coordinates,
         bounds: Bounds,
