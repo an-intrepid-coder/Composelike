@@ -6,8 +6,8 @@ data class MapRect(val origin: Coordinates, val width: Int, val height: Int) {
 
     fun asCoordinates(): List<Coordinates> {
         var coordinatesList = listOf(origin)
-        rows.forEach { row ->
-            cols.forEach { col ->
+        repeat(height) { row ->
+            repeat(width) { col ->
                 coordinatesList = coordinatesList.plus(
                     Coordinates(origin.x + col, origin.y + row)
                 )
@@ -16,7 +16,7 @@ data class MapRect(val origin: Coordinates, val width: Int, val height: Int) {
         return coordinatesList
     }
 
-    fun asBounds(): Bounds { return Bounds(width, height) }
+    fun asBounds(): Bounds { return Bounds(cols, rows) }
 
     fun contains(coordinates: Coordinates): Boolean {
         return asCoordinates().contains(coordinates)

@@ -3,12 +3,6 @@ package com.example.composelike
 import kotlin.math.abs
 import kotlin.math.max
 
-data class Bounds(val xBound: Int, val yBound: Int) {
-    fun inBounds(coordinates: Coordinates): Boolean {
-        return coordinates.x in 0..xBound && coordinates.y in 0..yBound
-    }
-}
-
 data class Coordinates(val x: Int, val y: Int) {
 
     fun relativeTo(other: Coordinates): MovementDirection {

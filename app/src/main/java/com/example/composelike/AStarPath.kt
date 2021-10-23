@@ -133,13 +133,14 @@ sealed class AStarPath(
 
     class DirectActor(
         /*
-            TODO:
+            TODO: Optimization: By having each actor store a saved path and only recomputing it
+             when needed or every-so-often, I can vastly speed things up.
          */
         start: Coordinates,
         goal: Coordinates,
         bounds: Bounds,
         actor: Actor,
-        simulation: ComposelikeSimulation
+        simulation: ComposelikeSimulation,
     ) : AStarPath(
         waypoints = listOf(start, goal),
         bounds = bounds,
@@ -158,5 +159,4 @@ sealed class AStarPath(
         actor = actor,
         simulation = simulation
     )
-
 }

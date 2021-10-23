@@ -62,7 +62,7 @@ sealed class Tile(
      * Room Tiles are marked with their roomNumber in order to make it easier to treat them
      * as groups during map generation and (eventually) during event triggers.
      */
-    class Room(coordinates: Coordinates, roomNumber: Int) : Tile(
+    class Room(coordinates: Coordinates, roomNumber: Int? = null) : Tile(
         tileType = TileType.ROOM,
         coordinates = coordinates,
         _mapRepresentation = " .",

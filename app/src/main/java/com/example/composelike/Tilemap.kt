@@ -5,6 +5,29 @@ import androidx.annotation.RequiresApi
 
 const val dimensionCap = 80
 
+sealed class RoomSize(val sizeRange: IntRange) {
+    fun randomDimension(): Int {
+        return sizeRange.random()
+    }
+
+    class Small : RoomSize(3..5)
+    class Medium : RoomSize(6..9)
+    class Large : RoomSize(10..20)
+    // More varieties to come (TODO)
+}
+
+enum class RoomShape {
+    RECTANGLE,
+    SPLOTCH,
+    ROUND,
+    // More varieties to come (TODO)
+}
+
+enum class RoomConnectionType {
+    DEFAULT,
+    // More varieties to come (TODO)
+}
+
 /* TODO: In progress.
     Next Up:
         1. It would be a good time to implement a Door tile.
@@ -64,7 +87,19 @@ sealed class Tilemap(
         return (row == 0 || col == 0 || row == numRows - 1 || col == numCols - 1)
     }
 
-    private fun randomWalkableTile(): Tile { return flattenedTiles().filter { it.walkable }.random() }
+    private fun randomWalkableTile(): Tile {
+        return flattenedTiles().filter { it.walkable }.random()
+    }
+
+    private fun randomWallTile(): Tile {
+        return flattenedTiles().filter { it.tileType == TileType.WALL }.random()
+    }
+
+    fun percentWalkable(): Double {
+        val walkableTiles = flattenedTiles().filter { it.walkable }.size.toDouble()
+        val totalTiles = (numCols * numRows).toDouble()
+        return walkableTiles / totalTiles * 100
+    }
 
     /**
      * If initTileType is "wall" or "floor" then it will init the whole Tilemap to that tile type.
@@ -153,126 +188,102 @@ sealed class Tilemap(
         }
     }
 
-    private fun insertTiles(tiles: List<Tile>) {
+    fun insertTiles(tiles: List<Tile>) {
         tiles.forEach { tile ->
             _tiles[tile.coordinates.y][tile.coordinates.x] = tile
         }
     }
 
     /**
-     * Connects rooms together after stamping them into a blank map of Wall tiles.
-     * This one is a work in progress. It is generally inferior to room accretion.
+     * Will stamp the given room, overriding any other map features which exist at that
+     * location. An optional roomNumber allows rooms to be tracked for other purposes later.
      */
-    @RequiresApi(Build.VERSION_CODES.N)
-    fun withConnectedStampedRooms(
-        /*
-            connectionStyle recipe notes:
-                "random" -> a webby approach that carves out a cave-like interior with many
-                    surrounding rooms left intact on the perimeter.
-         */
-        // TODO: Different connection styles.
-        connectionStyle: String = "random",
-        // TODO: Different room shapes.
-        roomShape: String = "rectangular",
-        roomSizeRange: IntRange = 4..6,
-        roomSpacingRange: IntRange = 3..9,
-        // TODO: Different room arrangements.
-        roomArrangement: String = "scattered grid",
-    ) {
-        fun withStampedRooms(): List<Coordinates> {
-            val nodesList = mutableListOf<Coordinates>()
-            var roomsStamped = 0
-            var currentRoomTopLeft = Coordinates(1, 1)
-            var currentRoomWidth = roomSizeRange.random()
-            var currentRoomHeight = roomSizeRange.random()
-            val roomTiles = mutableListOf<Tile>()
+    fun stampRoom( // In progress
+        roomShape: RoomShape,
+        roomSize: RoomSize,
+        center: Coordinates,
+        roomNumber: Int? = null,
+        roomConnectionType: RoomConnectionType = RoomConnectionType.DEFAULT,
+    ) : List<ConnectionNode> {
+        val connectionNodes = mutableListOf<ConnectionNode>()
+        val roomTiles = mutableListOf<Tile>()
 
-            fun stamping(): Boolean {
-                return currentRoomTopLeft.y + roomSizeRange.last + 1 < numRows - 1
-            }
-
-            fun stampRoom() {
-                repeat (currentRoomHeight) { row ->
-                    repeat (currentRoomWidth) { col ->
-                        roomTiles.add(
-                            Tile.Room(
-                                Coordinates(
-                                    x = currentRoomTopLeft.x + col,
-                                    y = currentRoomTopLeft.y + row
-                                ),
-                                roomsStamped
-                            )
-                        )
+        when (roomShape) {
+            RoomShape.RECTANGLE -> {
+                val roomWidth = roomSize.randomDimension()
+                val roomHeight = roomSize.randomDimension()
+                val roomOrigin = Coordinates(
+                    x = center.x - roomWidth / 2,
+                    y = center.y - roomHeight / 2,
+                )
+                MapRect(roomOrigin, roomWidth, roomHeight).let { roomRect ->
+                        roomRect.asCoordinates().forEach { coordinates ->
+                        getTileOrNull(coordinates)?.let {
+                            roomTiles.add(Tile.Room(coordinates, roomNumber))
+                        }
                     }
                 }
             }
-
-            fun addNode() {
-                nodesList.add(
-                    Coordinates(
-                        x = currentRoomTopLeft.x + currentRoomWidth / 2,
-                        y = currentRoomTopLeft.y + currentRoomHeight / 2
-                    )
-                )
-            }
-
-            fun setupNextRoom() {
-                roomsStamped++
-                val newRoomWidth = roomSizeRange.random()
-                val newRoomHeight = roomSizeRange.random()
-                val spacing = roomSpacingRange.random()
-                var nextTopLeft = Coordinates(
-                    x = if (currentRoomTopLeft.x + currentRoomWidth + spacing + newRoomWidth < numCols - 1)
-                        currentRoomTopLeft.x + currentRoomWidth + spacing
-                    else 1,
-                    y = currentRoomTopLeft.y
-                )
-
-                if (nextTopLeft.x < currentRoomTopLeft.x) {
-                    nextTopLeft = Coordinates(
-                        x = nextTopLeft.x,
-                        y = nextTopLeft.y + roomSizeRange.last + 1
-                    )
-                }
-
-                currentRoomTopLeft = nextTopLeft
-                currentRoomHeight = newRoomHeight
-                currentRoomWidth = newRoomWidth
-            }
-
-            while (stamping()) {
-                stampRoom()
-                addNode()
-                setupNextRoom()
-            }
-
-            insertTiles(roomTiles)
-
-            return nodesList
+            RoomShape.ROUND -> {
+            } // TODO: In Progress
+            RoomShape.SPLOTCH -> {
+            } // TODO: In Progress
         }
 
-        val newHallTiles = mutableListOf<Tile>()
-        withStampedRooms().let { roomNodes ->
-            AStarPath.DirectSequence(
-                waypoints = when (connectionStyle) {
-                    "random" ->  roomNodes.shuffled()
-                    else -> error ("Invalid connectionStyle: $connectionStyle")
-                },
-                bounds = mapRect.asBounds()
-            ).path?.forEach { coordinates ->
-                getTileOrNull(coordinates)?.let { tile ->
-                    if (tile.tileType == TileType.WALL) newHallTiles.add(Tile.Floor(coordinates))
-                }
-            }
+        when (roomConnectionType) {
+            RoomConnectionType.DEFAULT -> connectionNodes.add(
+                ConnectionNode.RoomCenter(
+                    coordinates = center,
+                )
+            )
+            else -> {} // More varieties TODO
         }
-        insertTiles(newHallTiles)
+
+        insertTiles(roomTiles)
+        return connectionNodes
     }
 
     /**
      * Generates a dungeon using room accretion, where each room is an offshoot of the previous.
      */
-    fun withRoomAccretion() {
-        // TODO
+    fun withRoomAccretion(
+        /*
+            TODO: Many parameters to generalize room accretion and produce a variety of
+                different map types using it. This is just a basic draft.
+         */
+    ) {
+
+        var roomsStamped = 0
+
+        fun endCondition(): Boolean {
+            return percentWalkable() > 50.0 // TODO: Tentative, must refine.
+        }
+
+        fun spotRoom(): Coordinates {
+            val returnValue = randomWallTile().coordinates // TODO: Tentative, must refine.
+            return returnValue
+        }
+
+        var lastNode = stampRoom(
+            roomShape = RoomShape.RECTANGLE,
+            roomSize = RoomSize.Medium(),
+            center = spotRoom(),
+            roomNumber = roomsStamped,
+        ).first()
+
+       while (!endCondition()) {
+            roomsStamped++
+
+            val nextNode = stampRoom(
+                roomShape = RoomShape.RECTANGLE,
+                roomSize = RoomSize.Medium(),
+                center = spotRoom(),
+                roomNumber = roomsStamped,
+            ).first()
+
+            nextNode.connect(lastNode, ConnectionPathType.DIRECT, this)
+            lastNode = nextNode
+        }
     }
 
     /**
@@ -339,7 +350,7 @@ sealed class Tilemap(
         parentSimulation: ComposelikeSimulation
     ) : Tilemap(cols, rows, parentSimulation, "wall") {
         init {
-            withConnectedStampedRooms()
+            withRoomAccretion() // <-- In Progress
             withEdgeWalls()
             withRandomStairsDown()
         }
