@@ -15,7 +15,14 @@ class ComposelikeSimulation {
     val actors = ActorContainer(this)
     val messageLog = MessageLog()
 
-    val debugMode = false
+    /*
+        Current Debug Mode Features:
+            1. Disables fog of war.
+
+            Note: Debug Mode operates with lower performance for the sake of making things easier
+                to debug. Will get more complex as the project grows.
+     */
+    val debugMode = true //false
 
     // TODO: A HudStrings class.
     fun exportHudStrings(): Map<String, String>? {
@@ -162,11 +169,13 @@ class ComposelikeSimulation {
     fun initSimulation() {
         tilemap = Tilemap.CollapsedRuins(parentSimulation = this)
 
+        /*
         spawnPopulation(
             actorType = ActorType.ALLIGATOR,
             populationFrequency = 0,
             absoluteNumber = 30,
         )
+        */
 
         spawnPopulation(
             actorType = ActorType.PLAYER,

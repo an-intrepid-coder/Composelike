@@ -34,6 +34,7 @@ sealed class AStarPath(
         Tips on A* performance courtesy of Reddit:
         https://www.reddit.com/r/roguelikedev/comments/59u44j/warning_a_and_manhattan_distance/
      */
+
     var path: List<Coordinates>? = null
 
     init {
@@ -57,9 +58,8 @@ sealed class AStarPath(
 
         val mutableWaypoints = waypoints.toMutableList()
         var currentWaypoint = mutableWaypoints.removeFirst()
-        var nextWaypoint: Coordinates? = mutableWaypoints.removeFirst()
 
-        fun connectWaypoints(): Boolean {
+        fun iterateWaypoints(nextWaypoint: Coordinates): Boolean {
             val cameFrom = mutableMapOf<Coordinates, Coordinates>()
 
             val gScore = mutableMapOf<Coordinates, Int>()
@@ -94,7 +94,7 @@ sealed class AStarPath(
                     if (tentativeGScore < gScoreNode) {
                         cameFrom[node] = currentNode
                         gScore[node] = tentativeGScore
-                        val hScore = heuristicFunction(node, nextWaypoint!!, actor, simulation)
+                        val hScore = heuristicFunction(node, nextWaypoint, actor, simulation)
                         fScore[node] = gScore[node]!! + hScore
                         if (node !in openSet && hScore < scoreDefault) openSet.add(node)
                     }
@@ -103,15 +103,12 @@ sealed class AStarPath(
             return false
         }
 
-        var pathFound = false
-        do {
-            if (connectWaypoints()) {
-                nextWaypoint?.let { currentWaypoint = it }
-                nextWaypoint = mutableWaypoints.removeFirstOrNull()
-                pathFound = true
-            } else break
-        } while (mutableWaypoints.isNotEmpty())
-        if (pathFound) path = finalPath
+        while (mutableWaypoints.isNotEmpty()) {
+            mutableWaypoints.removeFirstOrNull()?.let { nextWaypoint ->
+                if (iterateWaypoints(nextWaypoint)) currentWaypoint = nextWaypoint
+            }
+        }
+        path = finalPath
     }
 
     class Direct(

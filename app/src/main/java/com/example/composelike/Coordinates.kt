@@ -5,9 +5,22 @@ import kotlin.math.max
 
 data class Coordinates(val x: Int, val y: Int) {
 
+    fun bounded(bounds: Bounds): Coordinates {
+        return Coordinates(
+            x = if (x in bounds.xRange) x else {
+                if (x < bounds.xRange.first) bounds.xRange.first
+                else bounds.xRange.last
+            },
+            y = if (y in bounds.yRange) y else {
+                if (y < bounds.yRange.first) bounds.yRange.first
+                else bounds.yRange.last
+            }
+        )
+    }
+
     fun relativeTo(other: Coordinates): MovementDirection {
-        val dx = other.x - this.x
-        val dy = other.y - this.y
+        val dx = other.x - x
+        val dy = other.y - y
         return MovementDirection.Raw(dx, dy)
     }
 
@@ -63,5 +76,20 @@ data class Coordinates(val x: Int, val y: Int) {
             .map { Coordinates(this.x + it.dx, this.y + it.dy) }
             .filter { bounds.inBounds(it) }
             .toList()
+    }
+
+    // TODO: More parameters for randomElbowTo() and randomWobbleTo().
+
+    fun randomElbowTo(other: Coordinates): List<Coordinates> {
+        return if (coinFlip()) listOf(this, Coordinates(other.x, y), other)
+        else listOf(this, Coordinates(x, other.y), other)
+    }
+
+    fun randomWobbleTo(other: Coordinates): List<Coordinates> {
+        val bounds = Bounds(
+            xRange = 1..max(x, other.x),
+            yRange = 1..max(y, other.y)
+        )
+        return listOf() // TODO: Next
     }
 }

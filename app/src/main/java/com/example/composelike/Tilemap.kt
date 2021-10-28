@@ -230,10 +230,11 @@ sealed class Tilemap(
             } // TODO: In Progress
         }
 
+        val bounds = mapRect.asBounds().withoutEdges()
         when (roomConnectionType) {
             RoomConnectionType.DEFAULT -> connectionNodes.add(
                 ConnectionNode.RoomCenter(
-                    coordinates = center,
+                    coordinates = center.bounded(bounds),
                 )
             )
             else -> {} // More varieties TODO
@@ -252,16 +253,14 @@ sealed class Tilemap(
                 different map types using it. This is just a basic draft.
          */
     ) {
-
         var roomsStamped = 0
 
         fun endCondition(): Boolean {
-            return percentWalkable() > 50.0 // TODO: Tentative, must refine.
+            return percentWalkable() > 50.0 // This will get more complex.
         }
 
         fun spotRoom(): Coordinates {
-            val returnValue = randomWallTile().coordinates // TODO: Tentative, must refine.
-            return returnValue
+            return randomWallTile().coordinates
         }
 
         var lastNode = stampRoom(
@@ -272,24 +271,26 @@ sealed class Tilemap(
         ).first()
 
        while (!endCondition()) {
-            roomsStamped++
+           roomsStamped++
 
-            val nextNode = stampRoom(
-                roomShape = RoomShape.RECTANGLE,
-                roomSize = RoomSize.Medium(),
-                center = spotRoom(),
-                roomNumber = roomsStamped,
-            ).first()
+           val nextNode = stampRoom(
+               roomShape = RoomShape.RECTANGLE,
+               roomSize = RoomSize.Medium(),
+               center = spotRoom(),
+               roomNumber = roomsStamped,
+           ).first()
 
-            nextNode.connect(lastNode, ConnectionPathType.DIRECT, this)
-            lastNode = nextNode
+           //nextNode.connect(lastNode, ConnectionPathType.DIRECT, this)
+           nextNode.connect(lastNode, ConnectionPathType.ELBOW, this)
+           //nextNode.connect(lastNode, ConnectionPathType.WOBBLE, this)
+           lastNode = nextNode
         }
     }
 
     /**
-     * A blank map with walls around the edges.
+     * A blank map with walls around the edges. Eventually will include some obstacles and traps.
      */
-    class Testing(
+    class Arena(
         cols: Int = dimensionCap,
         rows: Int = dimensionCap,
         parentSimulation: ComposelikeSimulation

@@ -3,7 +3,7 @@ package com.example.composelike
 enum class ConnectionPathType {
     DIRECT,
     ELBOW,
-    WANDERING,
+    WOBBLE,
     MAZE,
 }
 
@@ -28,29 +28,39 @@ sealed class ConnectionNode(
     ) {
         fun validPlacement(tile: Tile): Boolean {
             return tile.tileType == TileType.WALL
-            // More complex conditions in the future.
         }
 
         val newHallTiles = mutableListOf<Tile>()
+
+        fun addPath(path: AStarPath) {
+            path.path?.forEach { coordinates ->
+                tilemap.getTileOrNull(coordinates)?.let { tile ->
+                    if (validPlacement(tile)) {
+                        newHallTiles.add(Tile.Floor(coordinates))
+                    }
+                }
+            }
+        }
+
         when (connectionPathType) {
             ConnectionPathType.DIRECT -> {
                 AStarPath.Direct(
                     start = coordinates,
                     goal = other.coordinates,
-                    bounds = tilemap.mapRect.asBounds()
-                ).path?.forEach { coordinates ->
-                    tilemap.getTileOrNull(coordinates)?.let { tile ->
-                        if (validPlacement(tile)) {
-                            newHallTiles.add(Tile.Floor(coordinates))
-                        }
-                    }
-                }
+                    bounds = tilemap.mapRect.asBounds().withoutEdges()
+                ).run { addPath(this) }
             }
             ConnectionPathType.ELBOW -> {
-                // Will have one or perhaps two "turns" inserted as waypoints.
-            } // TODO
-            ConnectionPathType.WANDERING -> {
-                // Will do a drunken walk with semi-random bounds.
+                AStarPath.DirectSequence(
+                    waypoints = coordinates.randomElbowTo(other.coordinates),
+                    bounds = tilemap.mapRect.asBounds().withoutEdges()
+                ).run { addPath(this) }
+            }
+            ConnectionPathType.WOBBLE -> {
+                AStarPath.DirectSequence(
+                    waypoints = coordinates.randomWobbleTo(other.coordinates),
+                    bounds = tilemap.mapRect.asBounds().withoutEdges()
+                ).run { addPath(this) }
             } // TODO
             ConnectionPathType.MAZE -> {
                 // The most challenging: This will create a full-on maze with exit and entrance
