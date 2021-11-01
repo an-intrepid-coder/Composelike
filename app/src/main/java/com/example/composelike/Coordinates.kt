@@ -2,6 +2,7 @@ package com.example.composelike
 
 import kotlin.math.abs
 import kotlin.math.max
+import kotlin.math.sin
 
 data class Coordinates(val x: Int, val y: Int) {
 
@@ -78,18 +79,96 @@ data class Coordinates(val x: Int, val y: Int) {
             .toList()
     }
 
-    // TODO: More parameters for randomElbowTo() and randomWobbleTo().
-
+    /**
+     * Creates a single bend in the path.
+     */
     fun randomElbowTo(other: Coordinates): List<Coordinates> {
         return if (coinFlip()) listOf(this, Coordinates(other.x, y), other)
         else listOf(this, Coordinates(x, other.y), other)
     }
 
-    fun randomWobbleTo(other: Coordinates): List<Coordinates> {
-        val bounds = Bounds(
-            xRange = 1..max(x, other.x),
-            yRange = 1..max(y, other.y)
-        )
-        return listOf() // TODO: Next
+    /**
+     * This one is experimental and in progress. It attempts to create a random "wobble"
+     * or "wave" from one point to another. This results in very unpredictable but neat looking
+     * connections over long distances.
+     */
+    fun randomWobbleTo(
+        other: Coordinates,
+        amplitudeModifier: Double = 5.0,
+        periodModifier: Double = .8,
+        plotFrequency: Int = 5,
+    ): List<Coordinates> {
+        val points = mutableListOf<Coordinates>()
+
+        val xDistance = abs(x - other.x) - 1
+        val yDistance = abs(y - other.y) - 1
+        val timeAndPlot =
+            if (xDistance >= yDistance) Pair(xDistance, yDistance)
+            else Pair(yDistance, xDistance)
+
+        fun timeAxisAlreadyOriented(): Boolean {
+            return if (timeAndPlot.first == xDistance) x <= other.x else y <= other.y
+        }
+
+        val startGoal = if (timeAxisAlreadyOriented()) Pair(this, other) else Pair(other, this)
+        var swapped = false
+
+        val amplitude =
+            max(abs(x - other.x).toDouble(), abs(y - other.y).toDouble()) / amplitudeModifier
+
+        fun plotPoint(plotIndex: Int): Coordinates {
+            return if (timeAndPlot.first == xDistance) {
+                if (!swapped) {
+                    Coordinates(
+                        x = startGoal.first.x + plotIndex,
+                        y = startGoal.first.y +
+                                (amplitude * sin(plotIndex.toDouble()) * periodModifier).toInt()
+                    )
+                } else {
+                    Coordinates(
+                        x = startGoal.first.x +
+                                (amplitude * sin(plotIndex.toDouble()) * periodModifier).toInt(),
+                        y = startGoal.first.y + plotIndex
+                    )
+                }
+            } else {
+                if (!swapped) {
+                    Coordinates(
+                        x = startGoal.first.x +
+                                (amplitude * sin(plotIndex.toDouble()) * periodModifier).toInt(),
+                        y = startGoal.first.y + plotIndex
+                    )
+                } else {
+                    Coordinates(
+                        x = startGoal.first.x + plotIndex,
+                        y = startGoal.first.y +
+                                (amplitude * sin(plotIndex.toDouble()) * periodModifier).toInt()
+                    )
+                }
+            }
+        }
+
+        points.add(startGoal.first)
+
+        fun checkSwap(coordinates: Coordinates): Boolean {
+            val currentXDistance = abs(coordinates.x - startGoal.second.x) - 1
+            val currentYDistance = abs(coordinates.y - startGoal.second.y) - 1
+            if (!swapped && timeAndPlot.first == xDistance && currentXDistance < currentYDistance)
+                return true
+            if (!swapped && timeAndPlot.first == yDistance && currentYDistance < currentXDistance)
+                return true
+            return false
+        }
+
+        repeat(timeAndPlot.first) { plotIndex ->
+            if (plotIndex % plotFrequency == 0) {
+                val point = plotPoint(plotIndex)
+                points.add(point)
+                if (!swapped) swapped = checkSwap(point)
+            }
+        }
+
+        points.add(startGoal.second)
+        return points
     }
 }

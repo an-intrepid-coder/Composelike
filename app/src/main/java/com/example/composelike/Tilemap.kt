@@ -65,6 +65,7 @@ sealed class Tilemap(
         return _tiles.getOrNull(coordinates.y)?.getOrNull(coordinates.x)
     }
 
+    // TODO: Field of View system is not quite there yet.
     fun setFieldOfView(
         actor: Actor,
         fullMapPass: Boolean = false
@@ -248,10 +249,9 @@ sealed class Tilemap(
      * Generates a dungeon using room accretion, where each room is an offshoot of the previous.
      */
     fun withRoomAccretion(
-        /*
-            TODO: Many parameters to generalize room accretion and produce a variety of
-                different map types using it. This is just a basic draft.
-         */
+        roomShapes: List<RoomShape>,
+        roomSizes: List<RoomSize>,
+        connectionTypes: List<ConnectionPathType>
     ) {
         var roomsStamped = 0
 
@@ -264,26 +264,24 @@ sealed class Tilemap(
         }
 
         var lastNode = stampRoom(
-            roomShape = RoomShape.RECTANGLE,
-            roomSize = RoomSize.Medium(),
+            roomShape = roomShapes.random(),
+            roomSize = roomSizes.random(),
             center = spotRoom(),
             roomNumber = roomsStamped,
         ).first()
 
-       while (!endCondition()) {
-           roomsStamped++
+        while (!endCondition()) {
+            roomsStamped++
 
-           val nextNode = stampRoom(
-               roomShape = RoomShape.RECTANGLE,
-               roomSize = RoomSize.Medium(),
-               center = spotRoom(),
-               roomNumber = roomsStamped,
-           ).first()
+            val nextNode = stampRoom(
+                roomShape = roomShapes.random(),
+                roomSize = roomSizes.random(),
+                center = spotRoom(),
+                roomNumber = roomsStamped,
+            ).first()
 
-           //nextNode.connect(lastNode, ConnectionPathType.DIRECT, this)
-           nextNode.connect(lastNode, ConnectionPathType.ELBOW, this)
-           //nextNode.connect(lastNode, ConnectionPathType.WOBBLE, this)
-           lastNode = nextNode
+            nextNode.connect(lastNode, connectionTypes.random(), this)
+            lastNode = nextNode
         }
     }
 
@@ -351,7 +349,11 @@ sealed class Tilemap(
         parentSimulation: ComposelikeSimulation
     ) : Tilemap(cols, rows, parentSimulation, "wall") {
         init {
-            withRoomAccretion() // <-- In Progress
+            withRoomAccretion(
+                roomShapes = listOf(RoomShape.RECTANGLE),
+                roomSizes = listOf(RoomSize.Small(), RoomSize.Medium(), RoomSize.Large()),
+                connectionTypes = listOf(ConnectionPathType.WOBBLE)
+            )
             withEdgeWalls()
             withRandomStairsDown()
         }

@@ -22,7 +22,7 @@ class ComposelikeSimulation {
             Note: Debug Mode operates with lower performance for the sake of making things easier
                 to debug. Will get more complex as the project grows.
      */
-    val debugMode = true //false
+    val debugMode = false
 
     // TODO: A HudStrings class.
     fun exportHudStrings(): Map<String, String>? {
@@ -169,13 +169,11 @@ class ComposelikeSimulation {
     fun initSimulation() {
         tilemap = Tilemap.CollapsedRuins(parentSimulation = this)
 
-        /*
         spawnPopulation(
             actorType = ActorType.ALLIGATOR,
             populationFrequency = 0,
             absoluteNumber = 30,
         )
-        */
 
         spawnPopulation(
             actorType = ActorType.PLAYER,
